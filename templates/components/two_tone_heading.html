@@ -1,0 +1,8 @@
+{% comment %}
+Signature two-tone headline. Usage:
+  <h1 class="text-hero tracking-tight">
+    {% include "components/two_tone_heading.html" with heading=home.hero_heading %}
+  </h1>
+Renders each line of `heading` on its own line; the second line is muted.
+{% endcomment %}
+{% for line in heading.splitlines %}<span class="block {% if forloop.counter == 2 %}text-ink-muted{% else %}text-ink{% endif %}">{{ line }}</span>{% endfor %}

@@ -1,0 +1,60 @@
+@import "./fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-ink font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  [x-cloak] {
+    display: none !important;
+  }
+  .reveal {
+    @apply translate-y-4 opacity-0 transition duration-300 ease-out;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  .bg-grid-surface {
+    background-image: theme("backgroundImage.grid-pattern");
+    background-size: theme("backgroundSize.grid");
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-eyebrow text-ink-secondary;
+  }
+
+  /* The signature pill CTA: fully rounded, with a circular arrow badge inset
+     on the right in a contrasting colour. */
+  .btn-pill {
+    @apply inline-flex items-center gap-3 rounded-full bg-accent py-2 pl-6 pr-2
+           text-sm font-semibold text-white shadow-card transition
+           hover:bg-accent-dark hover:shadow-card-hover;
+  }
+  .btn-pill__icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-full bg-white text-accent
+           transition-transform duration-300 group-hover:translate-x-0.5;
+  }
+  .btn-pill--dark {
+    @apply bg-white text-band hover:bg-white/90;
+  }
+  .btn-pill--dark .btn-pill__icon {
+    @apply bg-band text-white;
+  }
+
+  .card {
+    @apply rounded-card bg-white shadow-card;
+  }
+  .card-hover {
+    @apply transition duration-300 hover:-translate-y-1 hover:shadow-card-hover;
+  }
+}

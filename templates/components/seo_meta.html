@@ -1,0 +1,19 @@
+{% comment %}
+Reads the SEOFields mixin off `seo` (any object with meta_title/meta_description/
+og_image/canonical_url/noindex), with sensible fallbacks. Include inside <head>.
+{% endcomment %}
+<title>{{ seo.seo_title|default:"[TODO: site title]" }}</title>
+<meta name="description" content="{{ seo.meta_description|default:"[TODO: meta description]" }}">
+{% if seo.canonical_url %}<link rel="canonical" href="{{ seo.canonical_url }}">{% endif %}
+{% if seo.noindex %}<meta name="robots" content="noindex">{% endif %}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ seo.seo_title }}">
+<meta property="og:description" content="{{ seo.meta_description }}">
+{% if seo.og_image %}
+  <meta property="og:image" content="{{ seo.og_image.url }}">
+{% elif seo.hero_image %}
+  <meta property="og:image" content="{{ seo.hero_image.url }}">
+{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo.seo_title }}">
+<meta name="twitter:description" content="{{ seo.meta_description }}">

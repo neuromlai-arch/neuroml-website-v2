@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-white bg-grid-surface pb-24 pt-40 lg:pb-32 lg:pt-48">
+  <div class="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2 lg:px-8">
+    <div class="reveal">
+      <p class="eyebrow">[TODO: eyebrow label]</p>
+      <h1 class="mt-4 text-hero tracking-tight">
+        {% include "components/two_tone_heading.html" with heading=home.hero_heading %}
+      </h1>
+      {% if home.hero_subheading %}
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-secondary">{{ home.hero_subheading }}</p>
+      {% endif %}
+      <div class="mt-10 flex flex-wrap items-center gap-4">
+        {% include "components/pill_cta.html" with label=home.hero_cta_label url=home.hero_cta_url %}
+      </div>
+    </div>
+
+    <div class="reveal relative h-[420px] lg:h-[520px]">
+      <div class="absolute inset-0 flex items-center justify-center">
+        {% for service in hero_services %}
+          <div class="card absolute w-64 p-6
+                      {% if forloop.first %}z-10 -translate-x-24 -rotate-6 scale-90 opacity-60 blur-[1px]
+                      {% elif forloop.last %}z-10 translate-x-24 rotate-6 scale-90 opacity-60 blur-[1px]
+                      {% else %}z-20 scale-100{% endif %}">
+            {% if service.icon %}
+              <img src="{{ service.icon.url }}" alt="" class="h-10 w-10" loading="lazy">
+            {% endif %}
+            <p class="mt-4 text-base font-semibold text-ink">{{ service.title }}</p>
+            <p class="mt-2 text-sm text-ink-secondary">{{ service.tagline }}</p>
+          </div>
+        {% empty %}
+          <div class="card w-64 p-6">
+            <p class="text-sm text-ink-muted">[TODO: publish services to populate this cluster]</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% if tech_partners %}
+    <div class="reveal relative mx-auto mt-20 max-w-4xl px-6 lg:px-8">
+      <div class="flex items-center gap-3 overflow-x-auto rounded-full border border-grid bg-white p-3 shadow-card">
+        {% for partner in tech_partners %}
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl p-2 {% if forloop.first %}bg-accent{% else %}bg-grid{% endif %}">
+            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}"
+                 class="h-full w-full object-contain {% if forloop.first %}brightness-0 invert{% endif %}" loading="lazy">
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
