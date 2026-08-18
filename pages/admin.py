@@ -2,7 +2,7 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 
 from core.admin import SEO_FIELDSET
-from pages.models import HomePage
+from pages.models import HomePage, Office, SiteSettings
 
 
 @admin.register(HomePage)
@@ -28,3 +28,30 @@ class HomePageAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(ModelAdmin):
+    fieldsets = [
+        (None, {"fields": ["site_name", "logo", "logo_dark", "favicon", "default_og_image"]}),
+        ("Contact", {"fields": ["email", "phone", "whatsapp_number", "whatsapp_prefill"]}),
+        ("Social", {
+            "fields": ["linkedin_url", "twitter_url", "facebook_url",
+                       "youtube_url", "instagram_url"],
+        }),
+        ("Tracking", {"fields": ["gtm_container_id", "recaptcha_site_key"]}),
+    ]
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Office)
+class OfficeAdmin(ModelAdmin):
+    list_display = ["city", "country", "is_headquarters", "order"]
+    list_editable = ["is_headquarters", "order"]
+    list_filter = ["is_headquarters", "country"]
+    search_fields = ["city", "country", "address"]

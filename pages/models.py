@@ -58,3 +58,52 @@ class HomePage(SingletonModel, SEOFields, TimeStampedModel):
 
     def __str__(self):
         return "Home page"
+
+
+class SiteSettings(SingletonModel, TimeStampedModel):
+    """Global chrome: logo, contact details, social links, tracking IDs.
+
+    No address field — offices are separate, see Office below.
+    """
+
+    site_name = models.CharField(max_length=120)
+    logo = models.ImageField(upload_to="site/", blank=True)
+    logo_dark = models.ImageField(upload_to="site/", blank=True)
+    favicon = models.ImageField(upload_to="site/", blank=True)
+    default_og_image = models.ImageField(upload_to="site/", blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    whatsapp_number = models.CharField(max_length=40, blank=True)
+    whatsapp_prefill = models.CharField(max_length=200, blank=True)
+    linkedin_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
+    youtube_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    gtm_container_id = models.CharField(max_length=30, blank=True)
+    recaptcha_site_key = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = "site settings"
+        verbose_name_plural = "site settings"
+
+    def __str__(self):
+        return "Site settings"
+
+
+class Office(models.Model):
+    city = models.CharField(max_length=80)
+    country = models.CharField(max_length=80, blank=True)
+    address = models.TextField()
+    phone = models.CharField(max_length=40, blank=True)
+    email = models.EmailField(blank=True)
+    image = models.ImageField(upload_to="offices/", blank=True)
+    is_headquarters = models.BooleanField(default=False)
+    map_url = models.URLField(blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "city"]
+
+    def __str__(self):
+        return self.city

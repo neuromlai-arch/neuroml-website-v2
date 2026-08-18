@@ -9,6 +9,7 @@ urlpatterns = [
     path("", include("taxonomy.urls")),
     path("", include("solutions.urls")),
     path("", include("insights.urls")),
+    path("", include("careers.urls")),
 ]
 
 if settings.DEBUG:

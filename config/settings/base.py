@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "insights",
     "marketing",
     "pages",
+    "careers",
 ]
 
 MIDDLEWARE = [

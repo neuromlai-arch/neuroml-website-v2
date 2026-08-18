@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 
@@ -7,10 +8,20 @@ from taxonomy.models import Industry, ServiceCluster
 
 
 class Service(TimeStampedModel, SEOFields, Publishable):
-    """Replaces the ~14 hand-built service pages."""
+    """Replaces the ~14 hand-built service pages.
+
+    Three-level tree the megamenu depends on: ServiceCluster -> Service ->
+    Service. `parent` gives a service its own children, capped at one level
+    deep (a service already nested under a parent can't have children).
+    """
 
     cluster = models.ForeignKey(
         ServiceCluster, on_delete=models.PROTECT, related_name="services",
+    )
+    parent = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="children",
+        help_text="Leave blank for a top-level group within the cluster.",
     )
     title = models.CharField(max_length=140)
     slug = models.SlugField(max_length=160, unique=True)
@@ -23,15 +34,34 @@ class Service(TimeStampedModel, SEOFields, Publishable):
     hero_image = models.ImageField(upload_to="services/heroes/", blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     show_in_nav = models.BooleanField(default=True)
+    show_in_form_dropdown = models.BooleanField(
+        default=False, help_text="Include in the contact form's service picker.",
+    )
 
     class Meta:
         ordering = ["cluster__order", "order", "title"]
 
     def __str__(self):
+        if self.parent_id:
+            return f"{self.parent.title} › {self.title}"
         return self.title
 
     def get_absolute_url(self):
         return reverse("service_detail", kwargs={"slug": self.slug})
+
+    def clean(self):
+        super().clean()
+        if self.parent_id and self.pk and self.parent_id == self.pk:
+            raise ValidationError({"parent": "A service can't be its own parent."})
+        if self.parent_id and self.parent.parent_id:
+            raise ValidationError({
+                "parent": "Choose a top-level service — a service already nested "
+                          "under a parent can't have children of its own.",
+            })
+
+    @property
+    def depth(self):
+        return 2 if self.parent_id else 1
 
 
 class UseCase(TimeStampedModel, SEOFields, Publishable):
@@ -114,3 +144,55 @@ class OrganizationSolution(models.Model):
 
     def __str__(self):
         return f"{self.get_org_type_display()}: {self.title}"
+
+
+class Technology(TimeStampedModel, SEOFields, Publishable):
+    """A tool/platform a Service is built on, e.g. LangChain, Databricks."""
+
+    service = models.ForeignKey(
+        Service, on_delete=models.PROTECT, related_name="technologies",
+    )
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=100, unique=True)
+    tagline = models.CharField(max_length=140, blank=True)
+    logo = models.ImageField(upload_to="tech/", blank=True)
+    body = RichTextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    show_in_nav = models.BooleanField(default=True)
+    show_in_stack_grid = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["service", "order", "name"]
+        verbose_name_plural = "technologies"
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("technology_detail", kwargs={"slug": self.slug})
+
+
+class HireRole(TimeStampedModel, SEOFields, Publishable):
+    """A 'Hire a ___ developer' role page."""
+
+    title = models.CharField(max_length=140)
+    slug = models.SlugField(max_length=160, unique=True)
+    tagline = models.CharField(max_length=180, blank=True)
+    summary = models.TextField(blank=True)
+    body = RichTextField(blank=True)
+    skills = models.ManyToManyField(Technology, blank=True, related_name="hire_roles")
+    related_services = models.ManyToManyField(
+        Service, blank=True, related_name="hire_roles",
+    )
+    starting_rate = models.CharField(max_length=60, blank=True)
+    hero_image = models.ImageField(upload_to="hire/", blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("hire_role_detail", kwargs={"slug": self.slug})
