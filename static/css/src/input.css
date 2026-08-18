@@ -6,10 +6,13 @@
 
 @layer base {
   body {
-    @apply bg-white text-ink font-sans antialiased;
+    @apply bg-white text-ink-body font-sans antialiased;
+  }
+  h1, h2 {
+    @apply font-serif font-normal;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-accent;
+    @apply outline-2 outline-offset-2 outline-ink;
   }
   [x-cloak] {
     display: none !important;
@@ -33,28 +36,57 @@
     @apply text-xs font-semibold uppercase tracking-eyebrow text-ink-secondary;
   }
 
+  /* No shadows anywhere — in monochrome they read as muddy. Depth and
+     separation come from a 1px hairline border instead. */
+  .card {
+    @apply rounded-card border border-hairline bg-white;
+  }
+  .card-hover {
+    @apply transition duration-300 hover:-translate-y-1;
+  }
+
   /* The signature pill CTA: fully rounded, with a circular arrow badge inset
-     on the right in a contrasting colour. */
+     on the right. Primary is solid ink, inverts to white-on-black-border on
+     hover. No third button style. */
   .btn-pill {
-    @apply inline-flex items-center gap-3 rounded-full bg-accent py-2 pl-6 pr-2
-           text-sm font-semibold text-white shadow-card transition
-           hover:bg-accent-dark hover:shadow-card-hover;
+    @apply inline-flex items-center gap-3 rounded-full border border-ink bg-ink py-2 pl-6 pr-2
+           text-sm font-semibold text-white transition
+           hover:bg-white hover:text-ink;
   }
   .btn-pill__icon {
-    @apply flex h-9 w-9 items-center justify-center rounded-full bg-white text-accent
+    @apply flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink
            transition-transform duration-300 group-hover:translate-x-0.5;
   }
   .btn-pill--dark {
-    @apply bg-white text-band hover:bg-white/90;
+    @apply border-white bg-white text-ink hover:bg-band hover:text-white;
   }
   .btn-pill--dark .btn-pill__icon {
-    @apply bg-band text-white;
+    @apply bg-ink text-white transition-colors duration-300;
+  }
+  .btn-pill--dark:hover .btn-pill__icon {
+    @apply bg-white text-ink;
   }
 
-  .card {
-    @apply rounded-card bg-white shadow-card;
+  /* Secondary: transparent with a 1px ink border. */
+  .btn-outline {
+    @apply inline-flex items-center gap-3 rounded-full border border-ink bg-transparent py-2 pl-6 pr-2
+           text-sm font-semibold text-ink transition hover:bg-ink hover:text-white;
   }
-  .card-hover {
-    @apply transition duration-300 hover:-translate-y-1 hover:shadow-card-hover;
+  .btn-outline .btn-pill__icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink
+           transition-colors duration-300 group-hover:border-white group-hover:text-white;
+  }
+
+  /* Greyscale by default, full colour on hover — keeps colourful badges and
+     client marks from fighting the monochrome palette. */
+  .logo-mono {
+    @apply grayscale transition duration-300 hover:grayscale-0;
+  }
+
+  .form-error {
+    @apply flex items-center gap-1.5 text-sm text-error;
+  }
+  .form-success {
+    @apply flex items-center gap-1.5 text-sm text-success;
   }
 }

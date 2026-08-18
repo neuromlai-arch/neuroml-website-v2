@@ -1,5 +1,10 @@
 /** Every colour, font size, radius, and shadow used on the site lives here.
- *  Restyling the whole site is a matter of editing this one file. */
+ *  Restyling the whole site is a matter of editing this one file.
+ *
+ *  Monochrome, editorial, engineering-led. Black and white only — hierarchy
+ *  comes from scale, weight, and whitespace, not colour. `error` and
+ *  `success` are the one exception, reserved for form validation states;
+ *  never use them in a CTA, link, badge, or as decoration. */
 module.exports = {
   content: [
     "./templates/**/*.html",
@@ -8,15 +13,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        ink: "#16181D",
-        "ink-secondary": "#6B7280",
-        "ink-muted": "#9CA3AF",
-        accent: {
-          DEFAULT: "#E0312A",
-          dark: "#B8241F",
-        },
-        band: "#0D1117",
-        grid: "#F2F2F2",
+        ink: "#0B0B0B",
+        "ink-body": "#1A1A1A",
+        "ink-secondary": "#6B6B6B",
+        "ink-muted": "#9B9B9B",
+        hairline: "#E5E5E5",
+        band: "#0B0B0B",
+        grid: "#F4F4F4",
+        error: "#C1121F",
+        success: "#1B7F4C",
       },
       fontFamily: {
         sans: [
@@ -27,26 +32,27 @@ module.exports = {
           "Segoe UI",
           "sans-serif",
         ],
+        serif: [
+          "'Instrument Serif'",
+          "ui-serif",
+          "Georgia",
+          "Cambria",
+          "Times New Roman",
+          "serif",
+        ],
       },
       fontSize: {
-        hero: ["clamp(3rem, 7vw, 6rem)", { lineHeight: "0.95", fontWeight: "700" }],
+        hero: ["clamp(3rem, 7vw, 6rem)", { lineHeight: "0.95", fontWeight: "400" }],
       },
       letterSpacing: {
-        eyebrow: "0.15em",
+        eyebrow: "0.14em",
       },
       borderRadius: {
-        card: "20px",
-      },
-      boxShadow: {
-        card: "0 30px 80px -24px rgb(22 24 29 / 0.18)",
-        "card-hover": "0 40px 100px -20px rgb(22 24 29 / 0.28)",
-        "card-flank": "0 20px 50px -20px rgb(22 24 29 / 0.12)",
+        card: "16px",
       },
       backgroundImage: {
         "grid-pattern":
-          "linear-gradient(to right, #F2F2F2 1px, transparent 1px), linear-gradient(to bottom, #F2F2F2 1px, transparent 1px)",
-        "band-glow":
-          "radial-gradient(circle at 85% 15%, rgb(224 49 42 / 0.35), transparent 60%)",
+          "linear-gradient(to right, #F4F4F4 1px, transparent 1px), linear-gradient(to bottom, #F4F4F4 1px, transparent 1px)",
       },
       backgroundSize: {
         grid: "64px 64px",

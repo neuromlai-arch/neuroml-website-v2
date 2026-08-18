@@ -2,8 +2,9 @@
 The signature pill CTA: fully rounded, circular arrow badge inset on the right.
 Usage: {% include "components/pill_cta.html" with label=home.hero_cta_label url=home.hero_cta_url %}
 Pass variant="dark" for use on the dark band / popup left panel.
+Pass variant="secondary" for the transparent, ink-bordered style. No third style.
 {% endcomment %}
-<a href="{{ url|default:'#' }}" class="group btn-pill {% if variant == 'dark' %}btn-pill--dark{% endif %}">
+<a href="{{ url|default:'#' }}" class="group {% if variant == 'dark' %}btn-pill btn-pill--dark{% elif variant == 'secondary' %}btn-outline{% else %}btn-pill{% endif %}">
   <span>{{ label }}</span>
   <span class="btn-pill__icon" aria-hidden="true">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

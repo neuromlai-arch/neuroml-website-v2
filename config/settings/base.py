@@ -60,6 +60,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.megamenu",
                 "core.context_processors.footer_chrome",
+                "core.context_processors.site_settings",
             ],
         },
     },

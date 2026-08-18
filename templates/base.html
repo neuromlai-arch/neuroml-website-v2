@@ -6,38 +6,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {% include "components/seo_meta.html" %}
   <link rel="stylesheet" href="{% static 'css/dist/main.css' %}">
+  {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% endif %}
   {% block extra_head %}{% endblock %}
 </head>
 <body
-  class="bg-white font-sans text-ink antialiased"
+  class="bg-white font-sans text-ink-body antialiased"
   x-data="{ mobileOpen: false, scrolled: false }"
   x-init="scrolled = window.scrollY > 40"
   @scroll.window="scrolled = window.scrollY > 40"
 >
   <a href="#main-content"
      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]
-            focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm
+            focus:rounded-full focus:border focus:border-ink focus:bg-ink focus:px-4 focus:py-2 focus:text-sm
             focus:font-semibold focus:text-white">
     Skip to content
   </a>
 
   <header
     class="fixed inset-x-0 top-0 z-50 transition-all duration-300"
-    :class="scrolled ? 'bg-white/95 shadow-sm backdrop-blur' : 'bg-transparent'"
+    :class="scrolled ? 'border-b border-hairline bg-white/95 backdrop-blur' : 'border-b border-transparent bg-transparent'"
   >
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-      <a href="{% url 'home' %}" class="text-lg font-extrabold tracking-tight text-ink">
-        [TODO: logo]
+      <a href="{% url 'home' %}" class="flex items-center gap-2.5" aria-label="{{ site_settings.site_name|default:'Home' }}">
+        {% if site_settings.logo %}
+          <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="h-8 w-auto">
+        {% else %}
+          <span class="font-serif text-2xl text-ink">{{ site_settings.site_name|default:"[TODO: logo]" }}</span>
+        {% endif %}
       </a>
 
       <nav class="hidden items-center gap-8 lg:flex" aria-label="Primary">
         <div class="group relative">
-          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink hover:text-accent" aria-haspopup="true">
+          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink" aria-haspopup="true">
             Solutions
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="invisible absolute left-1/2 top-full z-40 w-[640px] -translate-x-1/2 translate-y-2 rounded-card
-                      bg-white p-8 opacity-0 shadow-card transition duration-200
+                      border border-hairline bg-white p-8 opacity-0 transition duration-200
                       group-hover:visible group-hover:translate-y-0 group-hover:opacity-100
                       group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
             <div class="grid grid-cols-3 gap-8">
@@ -46,7 +51,7 @@
                   <p class="eyebrow mb-3">{{ cluster.name }}</p>
                   <ul class="space-y-2">
                     {% for service in cluster.services.all %}
-                      <li><a href="{{ service.get_absolute_url }}" class="text-sm text-ink hover:text-accent">{{ service.title }}</a></li>
+                      <li><a href="{{ service.get_absolute_url }}" class="text-sm text-ink-body hover:text-ink hover:underline hover:underline-offset-4">{{ service.title }}</a></li>
                     {% empty %}
                       <li class="text-sm text-ink-muted">[TODO: publish services in this cluster]</li>
                     {% endfor %}
@@ -57,7 +62,7 @@
               {% endfor %}
             </div>
             {% if nav_org_solutions %}
-              <div class="mt-8 grid grid-cols-3 gap-4 border-t border-grid pt-6">
+              <div class="mt-8 grid grid-cols-3 gap-4 border-t border-hairline pt-6">
                 {% for org in nav_org_solutions %}
                   <a href="{{ org.target_url|default:'#' }}" class="rounded-lg p-3 hover:bg-grid">
                     <p class="text-sm font-semibold text-ink">{{ org.title }}</p>
@@ -70,17 +75,17 @@
         </div>
 
         <div class="group relative">
-          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink hover:text-accent" aria-haspopup="true">
+          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink" aria-haspopup="true">
             Industries
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="invisible absolute left-1/2 top-full z-40 w-80 -translate-x-1/2 translate-y-2 rounded-card
-                      bg-white p-6 opacity-0 shadow-card transition duration-200
+                      border border-hairline bg-white p-6 opacity-0 transition duration-200
                       group-hover:visible group-hover:translate-y-0 group-hover:opacity-100
                       group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
             <ul class="grid grid-cols-2 gap-2">
               {% for industry in nav_industries %}
-                <li><a href="{{ industry.get_absolute_url }}" class="block rounded-lg px-3 py-2 text-sm text-ink hover:bg-grid hover:text-accent">{{ industry.name }}</a></li>
+                <li><a href="{{ industry.get_absolute_url }}" class="block rounded-lg px-3 py-2 text-sm text-ink-body hover:bg-grid hover:text-ink">{{ industry.name }}</a></li>
               {% empty %}
                 <li class="col-span-2 text-sm text-ink-muted">[TODO: create industries]</li>
               {% endfor %}
@@ -89,17 +94,17 @@
         </div>
 
         <div class="group relative">
-          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink hover:text-accent" aria-haspopup="true">
+          <button type="button" class="flex items-center gap-1 text-sm font-semibold text-ink" aria-haspopup="true">
             Products
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="invisible absolute left-1/2 top-full z-40 w-72 -translate-x-1/2 translate-y-2 rounded-card
-                      bg-white p-6 opacity-0 shadow-card transition duration-200
+                      border border-hairline bg-white p-6 opacity-0 transition duration-200
                       group-hover:visible group-hover:translate-y-0 group-hover:opacity-100
                       group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
             <ul class="space-y-2">
               {% for product in nav_products %}
-                <li><a href="{{ product.get_absolute_url }}" class="block rounded-lg px-3 py-2 text-sm text-ink hover:bg-grid hover:text-accent">{{ product.title }}</a></li>
+                <li><a href="{{ product.get_absolute_url }}" class="block rounded-lg px-3 py-2 text-sm text-ink-body hover:bg-grid hover:text-ink">{{ product.title }}</a></li>
               {% empty %}
                 <li class="text-sm text-ink-muted">[TODO: create products]</li>
               {% endfor %}
@@ -107,7 +112,7 @@
           </div>
         </div>
 
-        <a href="#" class="text-sm font-semibold text-ink hover:text-accent">Insights</a>
+        <a href="#" class="text-sm font-semibold text-ink">Insights</a>
       </nav>
 
       <div class="hidden lg:block">
@@ -129,7 +134,11 @@
     <div class="absolute inset-0 bg-band/70" @click="mobileOpen = false"></div>
     <div class="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col overflow-y-auto bg-white p-6">
       <div class="flex items-center justify-between">
-        <span class="text-lg font-extrabold text-ink">[TODO: logo]</span>
+        {% if site_settings.logo %}
+          <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="h-7 w-auto">
+        {% else %}
+          <span class="font-serif text-xl text-ink">{{ site_settings.site_name|default:"[TODO: logo]" }}</span>
+        {% endif %}
         <button type="button" @click="mobileOpen = false" aria-label="Close menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
         </button>
@@ -139,20 +148,20 @@
           <p class="eyebrow">Solutions</p>
           <ul class="mt-3 space-y-3">
             {% for cluster in nav_clusters %}{% for service in cluster.services.all %}
-              <li><a href="{{ service.get_absolute_url }}" class="text-base text-ink">{{ service.title }}</a></li>
+              <li><a href="{{ service.get_absolute_url }}" class="text-base text-ink-body">{{ service.title }}</a></li>
             {% endfor %}{% endfor %}
           </ul>
         </div>
         <div>
           <p class="eyebrow">Industries</p>
           <ul class="mt-3 space-y-3">
-            {% for industry in nav_industries %}<li><a href="{{ industry.get_absolute_url }}" class="text-base text-ink">{{ industry.name }}</a></li>{% endfor %}
+            {% for industry in nav_industries %}<li><a href="{{ industry.get_absolute_url }}" class="text-base text-ink-body">{{ industry.name }}</a></li>{% endfor %}
           </ul>
         </div>
         <div>
           <p class="eyebrow">Products</p>
           <ul class="mt-3 space-y-3">
-            {% for product in nav_products %}<li><a href="{{ product.get_absolute_url }}" class="text-base text-ink">{{ product.title }}</a></li>{% endfor %}
+            {% for product in nav_products %}<li><a href="{{ product.get_absolute_url }}" class="text-base text-ink-body">{{ product.title }}</a></li>{% endfor %}
           </ul>
         </div>
       </nav>
@@ -166,63 +175,76 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-t border-grid bg-white">
+  <footer class="bg-band text-white">
     <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
       <div class="grid gap-12 md:grid-cols-4">
         <div>
-          <p class="text-lg font-extrabold text-ink">[TODO: company name]</p>
-          <p class="mt-3 text-sm leading-relaxed text-ink-secondary">[TODO: footer blurb]</p>
+          {% if site_settings.logo_dark %}
+            <img src="{{ site_settings.logo_dark.url }}" alt="{{ site_settings.site_name }}" class="h-7 w-auto">
+          {% else %}
+            <p class="font-serif text-xl text-white">{{ site_settings.site_name|default:"[TODO: company name]" }}</p>
+          {% endif %}
+          <p class="mt-3 text-sm leading-relaxed text-white/60">[TODO: footer blurb]</p>
+          {% if site_settings.linkedin_url or site_settings.twitter_url or site_settings.facebook_url or site_settings.youtube_url or site_settings.instagram_url %}
+            <div class="mt-6 flex gap-4 text-sm text-white/70">
+              {% if site_settings.linkedin_url %}<a href="{{ site_settings.linkedin_url }}" class="hover:text-white">LinkedIn</a>{% endif %}
+              {% if site_settings.twitter_url %}<a href="{{ site_settings.twitter_url }}" class="hover:text-white">X</a>{% endif %}
+              {% if site_settings.facebook_url %}<a href="{{ site_settings.facebook_url }}" class="hover:text-white">Facebook</a>{% endif %}
+              {% if site_settings.youtube_url %}<a href="{{ site_settings.youtube_url }}" class="hover:text-white">YouTube</a>{% endif %}
+              {% if site_settings.instagram_url %}<a href="{{ site_settings.instagram_url }}" class="hover:text-white">Instagram</a>{% endif %}
+            </div>
+          {% endif %}
         </div>
         <div>
-          <p class="eyebrow">Quick links</p>
-          <ul class="mt-4 space-y-2 text-sm">
-            <li><a href="#" class="text-ink-secondary hover:text-accent">About</a></li>
-            <li><a href="#" class="text-ink-secondary hover:text-accent">Careers</a></li>
-            <li><a href="#" class="text-ink-secondary hover:text-accent">Contact</a></li>
+          <p class="eyebrow text-white/50">Quick links</p>
+          <ul class="mt-4 space-y-2 text-sm text-white/70">
+            <li><a href="#" class="hover:text-white hover:underline hover:underline-offset-4">About</a></li>
+            <li><a href="#" class="hover:text-white hover:underline hover:underline-offset-4">Careers</a></li>
+            <li><a href="#contact" class="hover:text-white hover:underline hover:underline-offset-4">Contact</a></li>
           </ul>
         </div>
         <div>
-          <p class="eyebrow">Services</p>
-          <ul class="mt-4 space-y-2 text-sm">
+          <p class="eyebrow text-white/50">Services</p>
+          <ul class="mt-4 space-y-2 text-sm text-white/70">
             {% for cluster in nav_clusters %}{% for service in cluster.services.all %}
-              <li><a href="{{ service.get_absolute_url }}" class="text-ink-secondary hover:text-accent">{{ service.title }}</a></li>
+              <li><a href="{{ service.get_absolute_url }}" class="hover:text-white hover:underline hover:underline-offset-4">{{ service.title }}</a></li>
             {% endfor %}{% endfor %}
           </ul>
         </div>
         <div>
-          <p class="eyebrow">Stay in the loop</p>
+          <p class="eyebrow text-white/50">Stay in the loop</p>
           <form class="mt-4 flex gap-2" method="post" action="#">
             <label for="footer-email" class="sr-only">Email address</label>
             <input id="footer-email" type="email" name="email" placeholder="you@company.com" required
-                   class="w-full rounded-full border border-grid px-4 py-2 text-sm text-ink">
-            <button type="submit" class="shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-dark">
+                   class="w-full rounded-full border border-white/25 bg-transparent px-4 py-2 text-sm text-white placeholder:text-white/40">
+            <button type="submit" class="shrink-0 rounded-full border border-white bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-band hover:text-white">
               Subscribe
             </button>
           </form>
-          <p class="mt-2 text-xs text-ink-muted">[TODO: wire up to NewsletterSubscriber]</p>
+          <p class="mt-2 text-xs text-white/40">[TODO: wire up to NewsletterSubscriber]</p>
         </div>
       </div>
 
       {% if recognitions %}
-        <div class="mt-16 flex flex-wrap items-center gap-8 border-t border-grid pt-8">
+        <div class="mt-16 flex flex-wrap items-center gap-8 border-t border-white/15 pt-8">
           {% for r in recognitions %}
             <a href="{{ r.url|default:'#' }}">
-              <img src="{{ r.badge.url }}" alt="{{ r.name }}" class="h-10 w-auto grayscale transition hover:grayscale-0" loading="lazy">
+              <img src="{{ r.badge.url }}" alt="{{ r.name }}" class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" loading="lazy">
             </a>
           {% endfor %}
         </div>
       {% endif %}
 
-      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-grid pt-8 text-xs text-ink-secondary md:flex-row">
-        <p>&copy; {% now "Y" %} [TODO: company name]. All rights reserved.</p>
+      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/15 pt-8 text-xs text-white/50 md:flex-row">
+        <p>&copy; {% now "Y" %} {{ site_settings.site_name|default:"[TODO: company name]" }}. All rights reserved.</p>
         <div class="flex gap-4">
-          <a href="#" class="hover:text-accent">Privacy</a>
+          <a href="#" class="hover:text-white">Privacy</a>
         </div>
       </div>
     </div>
   </footer>
 
-  {# Floating WhatsApp button waits on SiteSettings.whatsapp_number, not modelled yet #}
+  {# Floating WhatsApp button waits on session 3 (forms/integrations) — SiteSettings.whatsapp_number is modelled. #}
 
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
   <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
