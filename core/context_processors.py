@@ -1,8 +1,11 @@
 """The megamenu builds from real querysets, never hardcoded. Cached so every
 page load isn't paying for the joins."""
 
+import json
+
 from django.core.cache import cache
 from django.db.models import Prefetch
+from django.utils.safestring import mark_safe
 
 from marketing.models import LeadPopup, Recognition
 from pages.models import SiteSettings
@@ -58,7 +61,33 @@ def site_settings(request):
     if settings_obj is None:
         settings_obj = SiteSettings.load()
         cache.set(SITE_SETTINGS_CACHE_KEY, settings_obj, SITE_SETTINGS_CACHE_TTL)
-    return {"site_settings": settings_obj}
+
+    same_as = [
+        url for url in (
+            settings_obj.linkedin_url, settings_obj.twitter_url,
+            settings_obj.facebook_url, settings_obj.youtube_url,
+            settings_obj.instagram_url,
+        ) if url
+    ]
+    org = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": settings_obj.site_name or "[TODO: company name]",
+        "url": request.build_absolute_uri("/"),
+    }
+    if settings_obj.logo:
+        org["logo"] = request.build_absolute_uri(settings_obj.logo.url)
+    if settings_obj.email:
+        org["email"] = settings_obj.email
+    if settings_obj.phone:
+        org["telephone"] = settings_obj.phone
+    if same_as:
+        org["sameAs"] = same_as
+
+    return {
+        "site_settings": settings_obj,
+        "organization_json_ld": mark_safe(json.dumps(org)),
+    }
 
 
 def lead_popup(request):

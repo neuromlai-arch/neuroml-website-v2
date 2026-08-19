@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "easy_thumbnails",
     "django_q",
+    "csp",
     # local apps
     "core",
     "taxonomy",
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -138,4 +140,24 @@ UNFOLD = {
     "SITE_HEADER": "Content admin",
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
+}
+
+# django-csp. 'unsafe-inline' on script-src covers the per-page inline
+# JSON-LD blocks (breadcrumbs, FAQPage, Organization, etc.); 'unsafe-eval'
+# is required by Alpine.js's default build, which evaluates x-data
+# expressions via `Function()` — swap to the @alpinejs/csp build to drop it.
+# 'unsafe-inline' on style-src is a concession to the admin (Unfold +
+# CKEditor5 both inject inline styles).
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:", "https:"],
+        "font-src": ["'self'"],
+        "connect-src": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "base-uri": ["'self'"],
+        "form-action": ["'self'"],
+    },
 }

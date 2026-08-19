@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /careers/applications/
+Disallow: /forms/
+Disallow: /preview/
+
+Sitemap: {{ sitemap_url }}
