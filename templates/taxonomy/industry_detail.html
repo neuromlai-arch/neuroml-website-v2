@@ -68,6 +68,17 @@
     </section>
   {% endif %}
 
+  {% if igaming_faqs %}
+    <section class="border-t border-hairline bg-white py-20 lg:py-28">
+      <div class="mx-auto max-w-3xl px-6 lg:px-8">
+        <h2 class="font-serif text-3xl text-ink">Questions, answered</h2>
+        <div class="mt-10">
+          {% include "components/faq_accordion.html" with faqs=igaming_faqs %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
   {% if object.slug == "igaming-sweepstakes" %}
     <section class="border-t border-hairline bg-ink py-16 lg:py-20">
       <div class="mx-auto max-w-4xl px-6 lg:px-8">

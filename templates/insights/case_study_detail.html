@@ -32,26 +32,28 @@
     </div>
   {% endif %}
 
+  {% if object.challenge|default:""|striptags|slice:":6" != "[TODO]" or object.approach|default:""|striptags|slice:":6" != "[TODO]" or object.outcome|default:""|striptags|slice:":6" != "[TODO]" %}
   <div class="reveal mt-14 grid gap-10 sm:grid-cols-3">
-    {% if object.challenge %}
+    {% if object.challenge and object.challenge|striptags|slice:":6" != "[TODO]" %}
       <section>
         <h2 class="font-serif text-2xl text-ink">The challenge</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.challenge|safe }}</div>
       </section>
     {% endif %}
-    {% if object.approach %}
+    {% if object.approach and object.approach|striptags|slice:":6" != "[TODO]" %}
       <section>
         <h2 class="font-serif text-2xl text-ink">Our approach</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.approach|safe }}</div>
       </section>
     {% endif %}
-    {% if object.outcome %}
+    {% if object.outcome and object.outcome|striptags|slice:":6" != "[TODO]" %}
       <section>
         <h2 class="font-serif text-2xl text-ink">The outcome</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.outcome|safe }}</div>
       </section>
     {% endif %}
   </div>
+  {% endif %}
 
   {% if object.tech_stack.all %}
     <div class="mt-14 border-t border-hairline pt-8">
