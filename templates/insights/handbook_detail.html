@@ -24,7 +24,7 @@
         <p class="text-sm font-semibold text-ink">Get the PDF</p>
         <p class="mt-2 text-sm text-ink-secondary">Tell us where to send it.</p>
         <div id="handbook-gate-form" class="mt-4">
-          {% include "insights/_handbook_gate_form.html" %}
+          {% include "insights/_handbook_gate_form.html" with handbook=object %}
         </div>
       {% elif object.pdf %}
         <a href="{{ object.pdf.url }}" class="btn-pill group" download>
