@@ -5,6 +5,7 @@ from solutions import views
 urlpatterns = [
     path("services/", views.service_list, name="service_list"),
     path("services/<slug:slug>/", views.service_detail, name="service_detail"),
+    path("use-cases/", views.use_case_list, name="use_case_list"),
     path("use-cases/<slug:slug>/", views.use_case_detail, name="use_case_detail"),
     path("products/", views.product_list, name="product_list"),
     path("products/<slug:slug>/", views.product_detail, name="product_detail"),

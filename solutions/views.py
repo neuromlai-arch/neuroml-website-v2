@@ -200,6 +200,32 @@ def hire_role_detail(request, slug):
     return render(request, "solutions/hire_role_detail.html", context)
 
 
+# ----------------------------------------------------------------- Use cases
+
+def use_case_list(request):
+    qs = UseCase.objects.live().select_related("industry", "related_service")
+    industry_slug = request.GET.get("industry", "")
+    service_slug = request.GET.get("service", "")
+    if industry_slug:
+        qs = qs.filter(industry__slug=industry_slug)
+    if service_slug:
+        qs = qs.filter(related_service__slug=service_slug)
+
+    context = {
+        "page_obj": _paginate(request, qs),
+        "querystring": _filters_querystring(request),
+        "industries": Industry.objects.filter(show_in_nav=True),
+        "active_industry": industry_slug,
+        "active_service": service_slug,
+        "breadcrumbs": [
+            {"label": "Home", "url": reverse("home")},
+            {"label": "Use cases", "url": None},
+        ],
+    }
+    template = "solutions/_use_case_results.html" if _is_htmx(request) else "solutions/use_case_list.html"
+    return render(request, template, context)
+
+
 def use_case_detail(request, slug):
     manager = UseCase.objects if _is_preview(request) else UseCase.objects.live()
     use_case = get_object_or_404(manager.select_related("industry", "related_service"), slug=slug)
