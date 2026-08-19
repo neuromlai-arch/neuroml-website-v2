@@ -4,15 +4,16 @@ og_image/canonical_url/noindex), with sensible fallbacks. Include inside <head>.
 {% endcomment %}
 <title>{{ seo.seo_title|default:"[TODO: site title]" }}</title>
 <meta name="description" content="{{ seo.meta_description|default:"[TODO: meta description]" }}">
-{% if seo.canonical_url %}<link rel="canonical" href="{{ seo.canonical_url }}">{% endif %}
+<link rel="canonical" href="{{ seo.canonical_url|default:request.build_absolute_uri }}">
 {% if seo.noindex %}<meta name="robots" content="noindex">{% endif %}
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{ seo.seo_title }}">
 <meta property="og:description" content="{{ seo.meta_description }}">
+<meta property="og:url" content="{{ seo.canonical_url|default:request.build_absolute_uri }}">
 {% if seo.og_image %}
-  <meta property="og:image" content="{{ seo.og_image.url }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ seo.og_image.url }}">
 {% elif seo.hero_image %}
-  <meta property="og:image" content="{{ seo.hero_image.url }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ seo.hero_image.url }}">
 {% endif %}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ seo.seo_title }}">

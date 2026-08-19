@@ -32,6 +32,11 @@ def industry_detail(request, slug):
         request, "taxonomy/industry_detail.html",
         {
             "object": industry,
+            "seo": {
+                "seo_title": industry.name,
+                "meta_description": industry.blurb,
+                "hero_image": industry.icon,
+            },
             "use_cases": use_cases,
             "case_studies": case_studies,
             "products": products,

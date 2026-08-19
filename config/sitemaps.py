@@ -18,7 +18,7 @@ class PublishableSitemap(Sitemap):
     model = None
 
     def items(self):
-        return self.model.objects.live()
+        return self.model.objects.live().filter(noindex=False)
 
     def lastmod(self, obj):
         return obj.updated_at

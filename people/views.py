@@ -16,6 +16,11 @@ def team_member_detail(request, slug):
         "people/team_member_detail.html",
         {
             "object": member,
+            "seo": {
+                "seo_title": member.name,
+                "meta_description": member.bio,
+                "hero_image": member.photo,
+            },
             "recent_posts": member.blogposts.live()[:3],
             "recent_case_studies": member.casestudys.live()[:3],
             "breadcrumbs": breadcrumbs,
