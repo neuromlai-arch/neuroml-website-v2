@@ -1,8 +1,18 @@
-{% if src %}<img
+{% if src %}{% if webp_srcset %}<picture>
+  <source type="image/webp" {% if webp_srcset %}srcset="{{ webp_srcset }}" sizes="{{ sizes }}"{% endif %}>
+  <img
+    src="{{ src }}"
+    {% if srcset %}srcset="{{ srcset }}" sizes="{{ sizes }}"{% endif %}
+    alt="{{ alt }}"
+    {% if width %}width="{{ width }}" height="{{ height }}"{% endif %}
+    loading="{{ loading }}"
+    class="{{ css_class }}"
+  >
+</picture>{% else %}<img
   src="{{ src }}"
   {% if srcset %}srcset="{{ srcset }}" sizes="{{ sizes }}"{% endif %}
   alt="{{ alt }}"
   {% if width %}width="{{ width }}" height="{{ height }}"{% endif %}
   loading="{{ loading }}"
   class="{{ css_class }}"
->{% endif %}
+>{% endif %}{% endif %}

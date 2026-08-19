@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.fields import RichTextField
+from core.images import downscale_in_place, warm_renditions
 from core.models import Publishable, SEOFields, TimeStampedModel
 from people.models import TeamMember
 from solutions.models import Service
@@ -76,6 +77,13 @@ class CaseStudy(InsightBase):
 
     def get_absolute_url(self):
         return reverse("case_study_detail", kwargs={"slug": self.slug})
+
+    def save(self, *args, **kwargs):
+        if self.hero_image:
+            downscale_in_place(self.hero_image)
+        super().save(*args, **kwargs)
+        if self.hero_image:
+            warm_renditions(self.hero_image)
 
     @property
     def display_client(self):

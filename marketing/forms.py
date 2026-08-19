@@ -6,6 +6,7 @@ applied at the view layer (django-ratelimit), not here.
 from itertools import groupby
 
 from django import forms
+from django.core.cache import cache
 
 from core.forms import HoneypotForm
 from insights.models import Handbook
@@ -15,6 +16,32 @@ from solutions.models import Service
 TEXT_INPUT = "w-full rounded-lg border border-hairline bg-white px-4 py-3 text-sm text-ink-body placeholder:text-ink-muted"
 TEXTAREA = TEXT_INPUT
 SELECT = TEXT_INPUT
+
+SERVICE_DROPDOWN_CACHE_KEY = "service_dropdown_choices:v1"
+SERVICE_DROPDOWN_CACHE_TTL = 300
+
+
+def _service_dropdown_choices():
+    """Grouped (cluster name, [(pk, title), ...]) pairs for the
+    service_interest optgroups. This form is instantiated on every page
+    (the lead popup builds one via core.context_processors.lead_popup, which
+    is deliberately not cached itself), so without caching this specific
+    query it would run on every request site-wide. Invalidated on Service
+    save/delete — see core/signals.py."""
+    choices = cache.get(SERVICE_DROPDOWN_CACHE_KEY)
+    if choices is None:
+        queryset = (
+            Service.objects.live()
+            .filter(show_in_form_dropdown=True)
+            .select_related("cluster")
+            .order_by("cluster__order", "order")
+        )
+        choices = [
+            (cluster.name, [(service.pk, service.title) for service in services])
+            for cluster, services in groupby(queryset, key=lambda s: s.cluster)
+        ]
+        cache.set(SERVICE_DROPDOWN_CACHE_KEY, choices, SERVICE_DROPDOWN_CACHE_TTL)
+    return choices
 
 
 class ContactSubmissionBaseForm(HoneypotForm, forms.ModelForm):
@@ -48,6 +75,8 @@ class ContactSubmissionBaseForm(HoneypotForm, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if "service_interest" in self.fields:
             field = self.fields["service_interest"]
+            # Kept as a live (lazy, unevaluated on GET) queryset — ModelChoiceField.clean()
+            # resolves the submitted pk against this on POST, not against .choices.
             field.queryset = (
                 Service.objects.live()
                 .filter(show_in_form_dropdown=True)
@@ -55,13 +84,13 @@ class ContactSubmissionBaseForm(HoneypotForm, forms.ModelForm):
                 .order_by("cluster__order", "order")
             )
             field.required = False
-            # ModelChoiceField.clean() resolves by pk against the queryset above,
-            # not against .choices — so overriding choices with optgroups here
-            # only changes what's rendered, it can't break validation.
-            field.choices = [("", "Select a service")] + [
-                (cluster.name, [(service.pk, service.title) for service in services])
-                for cluster, services in groupby(field.queryset, key=lambda s: s.cluster)
-            ]
+            # Overriding choices with optgroups here only changes what's
+            # rendered, it can't break validation above. Built from the
+            # cached grouping, not by evaluating field.queryset — this form
+            # is constructed on every page load via the lead popup, so this
+            # is the difference between one query per request site-wide and
+            # one query per cache TTL window.
+            field.choices = [("", "Select a service")] + _service_dropdown_choices()
         for name in ("last_name", "phone", "company", "project_stage", "budget_range", "message"):
             if name in self.fields:
                 self.fields[name].required = False
@@ -103,10 +132,23 @@ class PopupForm(HoneypotForm, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["service_interest"].queryset = (
-            Service.objects.live().filter(show_in_form_dropdown=True)
-        )
-        self.fields["service_interest"].required = False
+        field = self.fields["service_interest"]
+        # Kept live for validation, same as ContactSubmissionBaseForm — see
+        # the comment there. This form is built fresh by core.context_processors
+        # .lead_popup on every single page (deliberately uncached), so the
+        # cached choices below are what keep that from being a Service query
+        # on every page load site-wide.
+        field.queryset = Service.objects.live().filter(show_in_form_dropdown=True)
+        field.required = False
+        # Flat, not grouped into optgroups like ContactSubmissionBaseForm —
+        # this popup is a compact widget, not the full contact page, and
+        # keeps its original (pre-caching) rendered shape. Same cached data
+        # underneath, just flattened back out.
+        field.choices = [("", "Select a service")] + [
+            (pk, title)
+            for _cluster, options in _service_dropdown_choices()
+            for pk, title in options
+        ]
         self.fields["phone"].required = False
         self.fields["message"].required = False
         self.field_order = ["name", "email", "phone", "service_interest", "message"]

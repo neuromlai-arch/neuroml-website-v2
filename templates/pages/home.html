@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load imaging %}
+{% load cache imaging %}
 
 {% block content %}
 <section class="relative overflow-hidden bg-white bg-grid-surface pb-24 pt-40 lg:pb-32 lg:pt-48">
@@ -52,6 +52,7 @@
   {% endif %}
 </section>
 
+{% cache 300 home_db_sections %}
 {# -------------------------------------------------------------- Trust band #}
 {% if recognitions %}
   <section class="reveal bg-band py-14 text-white">
@@ -353,6 +354,7 @@
     </div>
   </section>
 {% endif %}
+{% endcache %}
 
 {# --------------------------------------------------------------------- CTA #}
 <section id="contact" class="border-t border-hairline bg-band py-24 text-white lg:py-32">
