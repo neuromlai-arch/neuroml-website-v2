@@ -74,12 +74,6 @@ class DetailURLTests(SeedDataMixin, TestCase):
         response = self.client.get(reverse("service_detail", args=[service.slug]))
         self.assertEqual(response.status_code, 200)
 
-    def test_service_detail_with_children(self):
-        parent = Service.objects.live().filter(children__isnull=False).distinct().first()
-        self.assertIsNotNone(parent, "seed_demo should produce at least one parent service")
-        response = self.client.get(reverse("service_detail", args=[parent.slug]))
-        self.assertEqual(response.status_code, 200)
-
     def test_use_case_detail(self):
         use_case = self._first_live(UseCase.objects)
         response = self.client.get(reverse("use_case_detail", args=[use_case.slug]))

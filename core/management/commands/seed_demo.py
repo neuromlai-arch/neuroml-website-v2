@@ -104,8 +104,8 @@ class Command(BaseCommand):
 
     def _seed_industries(self):
         names = [
-            "Retail & E-commerce", "Supply Chain & Logistics", "Financial Services",
-            "Healthcare & Life Sciences", "Manufacturing", "Professional Services",
+            "iGaming & Sweepstakes", "E-commerce & Retail", "Fintech",
+            "Healthcare", "Logistics & Supply Chain", "SaaS & Startups",
         ]
         out = []
         for i, name in enumerate(names):
@@ -113,7 +113,7 @@ class Command(BaseCommand):
                 slug=slugify(name),
                 defaults=dict(
                     name=name,
-                    blurb=f"{PLACEHOLDER} How AI changes {name.lower()}.",
+                    blurb=f"[TODO] How AI changes {name.lower()}.",
                     order=i,
                 ),
             )
@@ -124,17 +124,20 @@ class Command(BaseCommand):
         return out
 
     def _seed_service_clusters(self):
-        names = [
-            "Enterprise AI Agents", "Agentic AI Foundry", "AI Readiness & Roadmap",
+        """Real taxonomy — order is deliberate (1-indexed, not enumerate-based)."""
+        entries = [
+            ("AI & Machine Learning", 1),
+            ("Product Engineering", 2),
+            ("Growth", 3),
         ]
         out = []
-        for i, name in enumerate(names):
+        for name, order in entries:
             obj, _ = ServiceCluster.objects.get_or_create(
                 slug=slugify(name),
                 defaults=dict(
                     name=name,
-                    blurb=f"{PLACEHOLDER} {name} services, built for production.",
-                    order=i,
+                    blurb=f"[TODO] {name} services, built for production.",
+                    order=order,
                 ),
             )
             out.append(obj)
@@ -178,82 +181,88 @@ class Command(BaseCommand):
     # ------------------------------------------------------------ solutions
 
     def _seed_services(self, clusters):
-        """9 total: 7 top-level + 2 nested one level deep."""
-        plan = {
-            clusters[0]: [
-                ("Enterprise Agent Design", []),
-                ("Agent Orchestration", ["Multi-Agent Workflows"]),
-                ("Human-in-the-Loop Review", []),
-            ],
-            clusters[1]: [
-                ("Foundry Platform Build", ["Model Evaluation Pipelines"]),
-                ("Agent Tooling & APIs", []),
-            ],
-            clusters[2]: [
-                ("AI Readiness Assessment", []),
-                ("Roadmap & Governance", []),
-            ],
-        }
+        """11 total, all top-level for now — nesting comes later if a
+        cluster grows. Taglines here are final copy, used verbatim; summary
+        and body are still placeholder, marked [TODO]."""
+        ai_ml, product_eng, growth = clusters
+        plan = [
+            (ai_ml, True, [
+                ("AI Agents & Automation", "Autonomous agents that do real work, not demos"),
+                ("RAG & Knowledge Systems", "Retrieval systems your team actually trusts"),
+                ("LLM Application Development", "Production apps on OpenAI, Anthropic, and open models"),
+                ("Computer Vision", "Detection, tracking, and inspection at production accuracy"),
+                ("ML Engineering & MLOps", "Models that stay accurate after launch"),
+            ]),
+            (product_eng, True, [
+                ("Full-Stack Development", "React, Next.js, FastAPI, Django, NestJS"),
+                ("Custom Software Development", "Systems built for one business, not configured for many"),
+                ("DevOps & Cloud", "AWS and GCP infrastructure that scales without drama"),
+                ("Salesforce Development", "Custom Salesforce builds and integrations"),
+            ]),
+            (growth, False, [
+                ("SEO", "Technical SEO and content that ranks"),
+                ("Digital Marketing", "Performance marketing for technical products"),
+            ]),
+        ]
         out = []
         order = 0
-        for cluster, entries in plan.items():
-            for title, children in entries:
+        for cluster, show_in_form_dropdown, entries in plan:
+            for title, tagline in entries:
                 slug = slugify(title)
-                parent, created = Service.objects.get_or_create(
+                obj, created = Service.objects.get_or_create(
                     slug=slug,
                     defaults=dict(
-                        cluster=cluster, title=title,
-                        tagline=f"{PLACEHOLDER} One-line pitch for {title.lower()}.",
-                        summary=f"{PLACEHOLDER} {title} summary for cards and listings.",
-                        body=f"<p>{PLACEHOLDER} Full body copy for {title}.</p>",
+                        cluster=cluster, title=title, tagline=tagline,
+                        summary=f"[TODO] {title} summary for cards and listings.",
+                        body=f"<p>[TODO] Full body copy for {title}.</p>",
                         order=order, show_in_nav=True,
-                        show_in_form_dropdown=(order % 2 == 0),
+                        show_in_form_dropdown=show_in_form_dropdown,
                         status=Service.Status.PUBLISHED, published_at=days_ago(30),
                     ),
                 )
                 if created:
-                    set_placeholder(parent, "icon", 64, 64, title[:2], slug=f"service-{slug}-icon")
-                    set_placeholder(parent, "hero_image", 1200, 675, title, slug=f"service-{slug}-hero")
-                    parent.save()
-                out.append(parent)
+                    set_placeholder(obj, "icon", 64, 64, title[:2], slug=f"service-{slug}-icon")
+                    set_placeholder(obj, "hero_image", 1200, 675, title, slug=f"service-{slug}-hero")
+                    obj.save()
+                out.append(obj)
                 order += 1
-                for child_title in children:
-                    child_slug = slugify(child_title)
-                    child, created = Service.objects.get_or_create(
-                        slug=child_slug,
-                        defaults=dict(
-                            cluster=cluster, parent=parent, title=child_title,
-                            tagline=f"{PLACEHOLDER} One-line pitch for {child_title.lower()}.",
-                            summary=f"{PLACEHOLDER} {child_title} summary.",
-                            body=f"<p>{PLACEHOLDER} Full body copy for {child_title}.</p>",
-                            order=order, show_in_nav=True,
-                            status=Service.Status.PUBLISHED, published_at=days_ago(30),
-                        ),
-                    )
-                    if created:
-                        set_placeholder(child, "hero_image", 1200, 675, child_title, slug=f"service-{child_slug}-hero")
-                        child.save()
-                    out.append(child)
-                    order += 1
         return out
 
     def _seed_technologies(self, services):
-        names = [
-            "LangGraph", "Databricks", "OpenAI Platform", "Anthropic Claude",
-            "Pinecone", "Temporal", "Kubernetes", "Snowflake",
-            "AWS Bedrock", "Airflow", "PostgreSQL", "Ray",
+        """Each technology is mapped to its real parent service by title.
+        The first twelve (in the order below) show in the stack grid."""
+        by_title = {s.title: s for s in services}
+        entries = [
+            ("Python", "Full-Stack Development"),
+            ("FastAPI", "Full-Stack Development"),
+            ("Django", "Full-Stack Development"),
+            ("NestJS", "Full-Stack Development"),
+            ("React", "Full-Stack Development"),
+            ("Next.js", "Full-Stack Development"),
+            ("React Native", "Full-Stack Development"),
+            ("LangChain", "AI Agents & Automation"),
+            ("LangGraph", "AI Agents & Automation"),
+            ("OpenAI API", "LLM Application Development"),
+            ("Anthropic API", "LLM Application Development"),
+            ("PyTorch", "Computer Vision"),
+            ("YOLO", "Computer Vision"),
+            ("AWS", "DevOps & Cloud"),
+            ("GCP", "DevOps & Cloud"),
+            ("Docker", "DevOps & Cloud"),
+            ("Kubernetes", "DevOps & Cloud"),
+            ("PostgreSQL", "Custom Software Development"),
+            ("Redis", "Custom Software Development"),
         ]
         out = []
-        for i, name in enumerate(names):
+        for i, (name, service_title) in enumerate(entries):
             slug = slugify(name)
-            service = services[i % len(services)]
             obj, created = Technology.objects.get_or_create(
                 slug=slug,
                 defaults=dict(
-                    service=service, name=name,
-                    tagline=f"{PLACEHOLDER} How we use {name}.",
-                    body=f"<p>{PLACEHOLDER} Full body copy for {name}.</p>",
-                    order=i, show_in_nav=(i < 8), show_in_stack_grid=(i < 10),
+                    service=by_title[service_title], name=name,
+                    tagline=f"[TODO] How we use {name}.",
+                    body=f"<p>[TODO] Full body copy for {name}.</p>",
+                    order=i, show_in_stack_grid=(i < 12),
                     status=Technology.Status.PUBLISHED, published_at=days_ago(20),
                 ),
             )
