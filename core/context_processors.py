@@ -7,6 +7,8 @@ from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils.safestring import mark_safe
 
+from core.calendly import build_calendly_url
+from core.utm import utm_initial
 from marketing.models import LeadPopup, Recognition
 from pages.models import SiteSettings
 from solutions.models import OrganizationSolution, Product, Service
@@ -97,6 +99,23 @@ def lead_popup(request):
 
     popup = LeadPopup.objects.prefetch_related("steps", "badges").first()
     return {"lead_popup": popup, "popup_form": PopupForm()}
+
+
+def calendly(request):
+    """The page-level scheduling URL — UTM-tagged, no prefill (nothing's
+    been submitted yet). contact_submit/popup_submit override this same
+    context key with a name+email-prefilled version for their success
+    states; see marketing/views.py. "" when calendly_url is unset, so
+    templates gate on `{% if calendly_url %}` alone."""
+    settings_obj = cache.get(SITE_SETTINGS_CACHE_KEY) or SiteSettings.load()
+    utm = utm_initial(request)
+    return {
+        "calendly_url": build_calendly_url(
+            settings_obj.calendly_url,
+            utm_source=utm["utm_source"], utm_medium=utm["utm_medium"],
+            utm_campaign=utm["utm_campaign"],
+        ),
+    }
 
 
 def newsletter_form(request):

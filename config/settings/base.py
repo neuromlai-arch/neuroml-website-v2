@@ -65,6 +65,7 @@ TEMPLATES = [
                 "core.context_processors.megamenu",
                 "core.context_processors.footer_chrome",
                 "core.context_processors.site_settings",
+                "core.context_processors.calendly",
                 "core.context_processors.lead_popup",
                 "core.context_processors.newsletter_form",
             ],

@@ -1,3 +1,4 @@
+{% load static %}
 <div class="form-success card p-6" role="status">
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" class="shrink-0">
     <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
@@ -5,3 +6,22 @@
   </svg>
   <span>{{ message }}</span>
 </div>
+{% if show_booking_button and calendly_url %}
+  {% comment %}
+    Our own tiny lazy-loader (not Calendly's ~100KB embed itself — that
+    only fetches on click, see static/js/calendly.js). Included here,
+    inside this HTMX-swapped partial, rather than in base.html, so it
+    only ever loads on the contact page and the lead popup's success
+    state — the two places this button appears — and never on a page
+    with no scheduling entry point.
+  {% endcomment %}
+  <script src="{% static 'js/calendly.js' %}"></script>
+  <button type="button" class="btn-pill group mt-4" onclick="window.openCalendlyPopup('{{ calendly_url|escapejs }}')">
+    <span>Book a call now</span>
+    <span class="btn-pill__icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </button>
+{% endif %}

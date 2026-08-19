@@ -34,7 +34,7 @@ class HomePageAdmin(ModelAdmin):
 class SiteSettingsAdmin(ModelAdmin):
     fieldsets = [
         (None, {"fields": ["site_name", "logo", "logo_dark", "favicon", "default_og_image"]}),
-        ("Contact", {"fields": ["email", "phone", "whatsapp_number", "whatsapp_prefill"]}),
+        ("Contact", {"fields": ["email", "phone", "whatsapp_number", "whatsapp_prefill", "calendly_url"]}),
         ("Social", {
             "fields": ["linkedin_url", "twitter_url", "facebook_url",
                        "youtube_url", "instagram_url"],

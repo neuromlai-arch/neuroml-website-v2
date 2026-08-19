@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load imaging %}
+{% load imaging static %}
 
 {% block content %}
 {% include "components/breadcrumbs.html" with items=breadcrumbs %}
@@ -84,6 +84,29 @@
           </figcaption>
         </figure>
       {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if calendly_url %}
+  {% comment %}
+    Our own tiny lazy-loader (not Calendly's ~100KB embed — that only
+    fetches on click, see static/js/calendly.js). Included here rather
+    than in base.html so it only loads on a case study detail page, never
+    on the index or any other page.
+  {% endcomment %}
+  <script src="{% static 'js/calendly.js' %}"></script>
+  <section class="border-t border-hairline bg-white py-20 text-center lg:py-28">
+    <div class="mx-auto max-w-2xl px-6 lg:px-8">
+      <h2 class="font-serif text-3xl text-ink">Considering something similar?</h2>
+      <button type="button" class="btn-pill group mx-auto mt-8" onclick="window.openCalendlyPopup('{{ calendly_url|escapejs }}')">
+        <span>Talk to us about work like this</span>
+        <span class="btn-pill__icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
     </div>
   </section>
 {% endif %}

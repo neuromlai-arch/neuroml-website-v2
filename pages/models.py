@@ -81,6 +81,13 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     youtube_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     gtm_container_id = models.CharField(max_length=30, blank=True)
+    calendly_url = models.URLField(
+        blank=True,
+        help_text="Your Calendly scheduling link, e.g. https://calendly.com/you/30min. "
+                   "Every 'Book a call' button and the demo page's scheduling embed is "
+                   "hidden entirely when this is blank — nothing breaks, they just don't "
+                   "render.",
+    )
     # Reserved — no form does server-side reCAPTCHA verification yet, and
     # this field is hidden from SiteSettingsAdmin so an editor can't fill it
     # in believing it does something. Wire up verification before exposing

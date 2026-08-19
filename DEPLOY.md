@@ -121,6 +121,21 @@ been down for more than ~15 minutes reports unhealthy.
   `# Reserved`) so editors can no longer fill in a value that does nothing.
   Wire up real verification before re-exposing it.
 
+## Privacy — Calendly sets third-party cookies
+
+`SiteSettings.calendly_url` (see `core/calendly.py`, `static/js/calendly.js`)
+lazy-loads Calendly's own embed script on first use — the demo page's inline
+widget, and any "Book a call" popup button. Calendly's embed sets its own
+third-party cookies once loaded, outside this app's control.
+
+**No cookie consent mechanism exists in this codebase yet.** If EU traffic is
+expected, a consent banner is needed before launch, and the Calendly embed
+(script load, inline widget, and every popup button) should be gated behind
+consent once one exists — right now every scheduling entry point loads
+Calendly the moment a visitor interacts with it, unconditionally. Not building
+that banner now; flagging it as a pre-launch dependency if `calendly_url` is
+set and EU visitors are in scope.
+
 ## Must exist externally before first deploy
 
 - **PostgreSQL** reachable at `DATABASE_URL`. `docker-compose.yml` only
@@ -145,3 +160,6 @@ been down for more than ~15 minutes reports unhealthy.
   launch and easy to forget.
 - If GTM/reCAPTCHA get wired up per the decision above: a **GTM container**
   and **reCAPTCHA site/secret key pair**.
+- If `calendly_url` is set and EU traffic is expected: a **cookie consent
+  banner**, with the Calendly embed gated behind it — see the Privacy section
+  above. Not built yet.

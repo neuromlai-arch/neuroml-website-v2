@@ -8,11 +8,27 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django_ratelimit.decorators import ratelimit
 
+from core.calendly import build_calendly_url
 from core.notifications import notify_staff_of_submission, send_templated_email
 from core.utm import utm_initial
 from marketing.forms import ContactForm, DemoForm, NewsletterForm, PopupForm
 from marketing.models import ContactSubmission, NewsletterSubscriber
 from pages.models import SiteSettings
+
+
+def _prefilled_calendly_url(submission, site_settings):
+    """The same page-level calendly_url the context processor already
+    provides, but with the just-submitted name/email baked in so a visitor
+    who books right after submitting doesn't have to type them again.
+    Passed to render() explicitly, which takes precedence over the context
+    processor's version of the same key."""
+    return build_calendly_url(
+        site_settings.calendly_url,
+        utm_source=submission.utm_source, utm_medium=submission.utm_medium,
+        utm_campaign=submission.utm_campaign,
+        name=f"{submission.first_name} {submission.last_name}".strip(),
+        email=submission.email,
+    )
 
 NEWSLETTER_SALT = "marketing.newsletter"
 
@@ -31,9 +47,12 @@ def contact_submit(request):
             submission.source = ContactSubmission.Source.CONTACT
             submission.source_url = request.META.get("HTTP_REFERER", "")
             submission.save()
-            notify_staff_of_submission(submission, site_settings=SiteSettings.load())
+            site_settings = SiteSettings.load()
+            notify_staff_of_submission(submission, site_settings=site_settings)
             return render(request, "components/_form_success.html", {
                 "message": "Thanks — we'll be in touch within one business day.",
+                "show_booking_button": True,
+                "calendly_url": _prefilled_calendly_url(submission, site_settings),
             })
     else:
         form = ContactForm(initial=utm_initial(request))
@@ -71,9 +90,12 @@ def popup_submit(request):
             submission.source = ContactSubmission.Source.POPUP
             submission.source_url = request.META.get("HTTP_REFERER", "")
             submission.save()
-            notify_staff_of_submission(submission, site_settings=SiteSettings.load())
+            site_settings = SiteSettings.load()
+            notify_staff_of_submission(submission, site_settings=site_settings)
             response = render(request, "components/_form_success.html", {
                 "message": "Thanks — we'll be in touch shortly.",
+                "show_booking_button": True,
+                "calendly_url": _prefilled_calendly_url(submission, site_settings),
             })
             response["HX-Trigger"] = "popup:submitted"
             return response

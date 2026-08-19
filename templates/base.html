@@ -1,4 +1,4 @@
-{% load static %}
+{% load static imaging %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -226,9 +226,11 @@
       {% if recognitions %}
         <div class="mt-16 flex flex-wrap items-center gap-8 border-t border-white/15 pt-8">
           {% for r in recognitions %}
-            <a href="{{ r.url|default:'#' }}">
-              <img src="{{ r.badge.url }}" alt="{{ r.name }}" class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" loading="lazy">
-            </a>
+            {% if r.badge %}
+              <a href="{{ r.url|default:'#' }}">
+                {% responsive_img r.badge alt=r.name css_class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
+              </a>
+            {% endif %}
           {% endfor %}
         </div>
       {% endif %}
@@ -301,7 +303,9 @@
           {% if lead_popup.badges.all %}
             <div class="mt-8 flex flex-wrap items-center gap-4 border-t border-white/15 pt-6">
               {% for badge in lead_popup.badges.all %}
-                <img src="{{ badge.badge.url }}" alt="{{ badge.name }}" class="logo-mono h-8 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" loading="lazy">
+                {% if badge.badge %}
+                  {% responsive_img badge.badge alt=badge.name css_class="logo-mono h-8 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
+                {% endif %}
               {% endfor %}
             </div>
           {% endif %}

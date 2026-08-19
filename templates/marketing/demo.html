@@ -1,20 +1,43 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+  {% if calendly_url %}
+    <link rel="stylesheet" href="https://assets.calendly.com/assets/external/widget.css">
+  {% endif %}
+{% endblock %}
+
 {% block content %}
 {% include "components/breadcrumbs.html" with items=breadcrumbs %}
 
 <section class="bg-white bg-grid-surface py-24 lg:py-32">
-  <div class="mx-auto grid max-w-5xl gap-16 px-6 lg:grid-cols-2 lg:px-8">
-    <div>
+  <div class="mx-auto max-w-5xl px-6 lg:px-8">
+    <div class="max-w-2xl">
       <p class="eyebrow">Book a demo</p>
       <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">See it in action</h1>
-      <p class="mt-6 max-w-md text-lg leading-relaxed text-ink-secondary">
+      <p class="mt-6 text-lg leading-relaxed text-ink-secondary">
         [TODO: demo-page intro copy — what a strategy call covers, typical length, who joins from our side.]
       </p>
     </div>
-    <div id="demo-form">
-      {% include "marketing/_demo_form_fields.html" %}
+
+    {% if calendly_url %}
+      <div class="reveal mt-14 card overflow-hidden">
+        <div class="calendly-inline-widget" data-url="{{ calendly_url }}" style="min-width:320px;height:700px;"></div>
+      </div>
+    {% endif %}
+
+    <div class="mt-20 border-t border-hairline pt-14">
+      <h2 class="font-serif text-2xl text-ink">Prefer email?</h2>
+      <p class="mt-2 max-w-md text-sm text-ink-secondary">Send us a few details instead and we'll reach out to schedule.</p>
+      <div id="demo-form" class="mt-8 max-w-xl">
+        {% include "marketing/_demo_form_fields.html" %}
+      </div>
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block extra_body %}
+  {% if calendly_url %}
+    <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+  {% endif %}
 {% endblock %}
