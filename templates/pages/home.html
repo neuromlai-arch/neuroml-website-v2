@@ -128,8 +128,10 @@
     </div>
 
     {% if industry_use_cases %}
-      {# Each tab click fetches its panel over HTMX — content is never pre-rendered
-         for hidden tabs, and switching tabs is a network swap, not a page reload. #}
+      {% comment %}
+        Each tab click fetches its panel over HTMX — content is never pre-rendered
+        for hidden tabs, and switching tabs is a network swap, not a page reload.
+      {% endcomment %}
       <div class="reveal mt-12 flex flex-wrap gap-2 border-b border-hairline pb-6" role="tablist" aria-label="Industries">
         {% for entry in industry_use_cases %}
           <button

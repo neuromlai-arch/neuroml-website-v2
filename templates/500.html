@@ -5,8 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Something went wrong</title>
-  {# Standalone on purpose: a 500 can be triggered by a context-processor or DB
-     failure, so this page must not depend on either. #}
+  {% comment %}
+    Standalone on purpose: a 500 can be triggered by a context-processor or DB
+    failure, so this page must not depend on either.
+  {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/dist/main.css' %}">
 </head>
 <body class="bg-white font-sans text-ink-body antialiased">

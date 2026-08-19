@@ -6,8 +6,53 @@ executes the page (see the accessibility pass in the launch-readiness task).
 from pathlib import Path
 
 from django.conf import settings
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+
+from careers.models import JobPosting
+from insights.models import BlogPost
+
+
+class NoLeakedTemplateCommentsTests(TestCase):
+    """`{# ... #}` is a single-line-only Django comment — Django's lexer
+    requires the closing `#}` on the same line, so a comment written across
+    multiple lines isn't parsed as a comment at all and renders as literal
+    text (multi-line comments need `{% comment %}...{% endcomment %}`
+    instead). Found this live on the homepage and 500.html: an explanatory
+    {# #} comment about script ordering was rendering as visible text below
+    the footer on every page. Fixed those, and this guards against it
+    recurring anywhere a comment like that gets added later."""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo")
+
+    def _assert_no_raw_comment_markers(self, html):
+        # A legitimate single-line {# ... #} never survives to the response;
+        # if either delimiter shows up in rendered output, some comment
+        # somewhere failed to parse as a comment.
+        self.assertNotIn("{#", html)
+        self.assertNotIn("#}", html)
+
+    def test_homepage_has_no_leaked_comment_text(self):
+        response = self.client.get(reverse("home"))
+        self._assert_no_raw_comment_markers(response.content.decode())
+
+    def test_500_page_has_no_leaked_comment_text(self):
+        from django.template.loader import render_to_string
+
+        self._assert_no_raw_comment_markers(render_to_string("500.html"))
+
+    def test_blog_detail_has_no_leaked_comment_text(self):
+        post = BlogPost.objects.live().first()
+        response = self.client.get(post.get_absolute_url())
+        self._assert_no_raw_comment_markers(response.content.decode())
+
+    def test_job_posting_detail_has_no_leaked_comment_text(self):
+        job = JobPosting.objects.live().first()
+        response = self.client.get(job.get_absolute_url())
+        self._assert_no_raw_comment_markers(response.content.decode())
 
 
 class PopupScriptOrderTests(TestCase):

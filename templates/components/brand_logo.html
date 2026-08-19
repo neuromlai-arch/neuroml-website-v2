@@ -1,0 +1,27 @@
+{% load static %}
+{% comment %}
+Usage: {% include "components/brand_logo.html" with variant="dark" css_class="h-10 w-auto" %}
+variant: "light" (default) renders logo.svg / SiteSettings.logo — use in the
+  header. "dark" renders logo-dark.svg / SiteSettings.logo_dark — use on
+  bg-band surfaces (footer, popup left panel).
+SiteSettings.logo / .logo_dark override the static file when an editor has
+set one, so the mark can be swapped from the admin without a deploy.
+Always wrapped in a link to home with an accessible name — the image
+itself is decorative (alt="") since the link already announces it.
+Pass link_class for layout classes on the wrapping <a> (e.g. flex alignment).
+{% endcomment %}
+<a href="{% url 'home' %}" aria-label="{{ site_settings.site_name|default:'Home' }}" class="{{ link_class }}">
+  {% if variant == "dark" %}
+    {% if site_settings.logo_dark %}
+      <img src="{{ site_settings.logo_dark.url }}" alt="" class="{{ css_class }}">
+    {% else %}
+      <img src="{% static 'brand/logo-dark.svg' %}" alt="" class="{{ css_class }}">
+    {% endif %}
+  {% else %}
+    {% if site_settings.logo %}
+      <img src="{{ site_settings.logo.url }}" alt="" class="{{ css_class }}">
+    {% else %}
+      <img src="{% static 'brand/logo.svg' %}" alt="" class="{{ css_class }}">
+    {% endif %}
+  {% endif %}
+</a>
