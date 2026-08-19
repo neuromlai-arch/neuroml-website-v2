@@ -8,7 +8,7 @@
     {% if object.industry %}<p class="eyebrow">{{ object.industry.name }}</p>{% endif %}
     <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
     <div class="mt-6 flex items-center gap-3">
-      {% if object.client_logo %}
+      {% if object.client_logo and not object.client_anonymous %}
         {% responsive_img object.client_logo alt=object.display_client css_class="h-8 w-auto logo-mono" sizes="120px" %}
       {% endif %}
       <p class="text-sm font-semibold text-ink-secondary">{{ object.display_client }}</p>
@@ -85,4 +85,17 @@
     </div>
   </section>
 {% endif %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ object.title|escapejs }}",
+  "description": "{{ object.excerpt|escapejs }}",
+  {% if object.hero_image %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ object.hero_image.url }}",{% endif %}
+  "datePublished": "{{ object.published_at|date:'c' }}",
+  "dateModified": "{{ object.updated_at|date:'c' }}"
+  {% if object.author %},"author": {"@type": "Person", "name": "{{ object.author.name|escapejs }}"}{% endif %}
+}
+</script>
 {% endblock %}
