@@ -1,3 +1,6 @@
+from unittest import mock
+
+from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -83,3 +86,64 @@ class JobApplicationSubmitTests(TestCase):
 
         self.assertEqual(JobApplication.objects.count(), 0)
         self.assertContains(response, "Too many applications")
+
+    def test_notification_email_renders_without_error(self):
+        with mock.patch("core.notifications.async_task", side_effect=lambda f, *a: f(*a)):
+            self.client.post(
+                reverse("job_application_submit", args=[self.job.slug]),
+                {
+                    "full_name": "Ada Lovelace", "email": "ada@example.com",
+                    "website": "", "resume": _resume(),
+                },
+            )
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertIn("Ada Lovelace", sent.subject)
+        self.assertIn(self.job.title, sent.subject)
+        self.assertEqual(sent.to, [self.job.apply_email])
+
+    def test_resume_wrong_extension_rejected(self):
+        bad_file = SimpleUploadedFile(
+            "resume.exe", b"not a resume", content_type="application/octet-stream",
+        )
+        response = self.client.post(
+            reverse("job_application_submit", args=[self.job.slug]),
+            {
+                "full_name": "Ada Lovelace", "email": "ada@example.com",
+                "website": "", "resume": bad_file,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(JobApplication.objects.count(), 0)
+        self.assertContains(response, "PDF, DOC, or DOCX")
+
+    def test_resume_over_5mb_rejected(self):
+        oversized = SimpleUploadedFile(
+            "resume.pdf", b"%PDF-1.4 " + b"0" * (5 * 1024 * 1024 + 1),
+            content_type="application/pdf",
+        )
+        response = self.client.post(
+            reverse("job_application_submit", args=[self.job.slug]),
+            {
+                "full_name": "Ada Lovelace", "email": "ada@example.com",
+                "website": "", "resume": oversized,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(JobApplication.objects.count(), 0)
+        self.assertContains(response, "5 MB")
+
+    def test_docx_resume_accepted(self):
+        docx_file = SimpleUploadedFile(
+            "resume.docx", b"fake docx bytes",
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+        response = self.client.post(
+            reverse("job_application_submit", args=[self.job.slug]),
+            {
+                "full_name": "Ada Lovelace", "email": "ada@example.com",
+                "website": "", "resume": docx_file,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(JobApplication.objects.count(), 1)

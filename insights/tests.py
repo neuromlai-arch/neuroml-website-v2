@@ -1,3 +1,6 @@
+from unittest import mock
+
+from django.core import mail
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.test import TestCase
@@ -74,3 +77,31 @@ class HandbookGateFormViewTests(TestCase):
 
         self.assertEqual(ContactSubmission.objects.count(), 0)
         self.assertContains(response, "Too many")
+
+    def test_notification_email_renders_without_error(self):
+        settings_obj = SiteSettings.load()
+        settings_obj.email = "team@example.com"
+        settings_obj.save()
+
+        with mock.patch("core.notifications.async_task", side_effect=lambda f, *a: f(*a)):
+            self.client.post(
+                reverse("handbook_gate_submit", args=[self.handbook.slug]),
+                {"first_name": "Ada", "email": "ada@example.com", "website": ""},
+            )
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertIn("Handbook download", sent.subject)
+        self.assertIn(self.handbook.title, sent.body)
+
+    def test_utm_params_captured_on_submit(self):
+        self.client.post(
+            reverse("handbook_gate_submit", args=[self.handbook.slug]),
+            {
+                "first_name": "Ada", "email": "ada@example.com", "website": "",
+                "utm_source": "google", "utm_medium": "organic", "utm_campaign": "seo",
+            },
+        )
+        submission = ContactSubmission.objects.get()
+        self.assertEqual(submission.utm_source, "google")
+        self.assertEqual(submission.utm_medium, "organic")
+        self.assertEqual(submission.utm_campaign, "seo")
