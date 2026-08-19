@@ -1,6 +1,8 @@
 """The preview capability: a signed, time-limited token lets a logged-in
-staff member view an unpublished object. No template exists for any content
-type yet (session 2) — this renders the same stub as the real detail URLs.
+staff member view an unpublished object. Every detail view already has its
+own staff `?preview=1` bypass (see e.g. solutions.views), so this just
+verifies the token and hands off to the object's real detail page with that
+flag set — there's no separate preview template to maintain.
 """
 
 from itertools import chain, groupby
@@ -10,7 +12,7 @@ from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.http import Http404
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from core.utm import utm_initial
 from insights.models import BlogPost, CaseStudy, Handbook
@@ -173,4 +175,6 @@ def preview(request, token):
 
     content_type = get_object_or_404(ContentType, pk=data["ct"])
     obj = get_object_or_404(content_type.model_class(), pk=data["pk"])
-    return render(request, "stub_detail.html", {"object": obj, "is_preview": True})
+    if not hasattr(obj, "get_absolute_url"):
+        raise Http404
+    return redirect(f"{obj.get_absolute_url()}?preview=1")
