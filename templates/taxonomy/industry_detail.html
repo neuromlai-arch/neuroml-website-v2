@@ -38,12 +38,23 @@
           {% for case_study in case_studies %}
             <a href="{{ case_study.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
               {% if case_study.hero_image %}
-                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-40 w-full object-cover" %}
+                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" %}
               {% endif %}
               <div class="flex flex-1 flex-col p-6">
-                <p class="text-base font-semibold text-ink">{{ case_study.title }}</p>
+                <p class="eyebrow">{{ case_study.display_client }}</p>
+                <p class="mt-3 text-base font-semibold text-ink">{{ case_study.title }}</p>
                 <p class="mt-2 text-sm text-ink-secondary">{{ case_study.excerpt|truncatewords:20 }}</p>
-                <p class="mt-auto pt-6 text-sm font-semibold text-ink">{{ case_study.display_client }}</p>
+                {% if case_study.metrics.all %}
+                  <div class="mt-6 flex gap-6 border-t border-hairline pt-6">
+                    {% for metric in case_study.metrics.all|slice:":2" %}
+                      <div>
+                        <p class="font-serif text-2xl text-ink">{{ metric.value }}</p>
+                        <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <p class="mt-auto pt-6 text-sm font-semibold text-ink">View case study &rarr;</p>
               </div>
             </a>
           {% endfor %}

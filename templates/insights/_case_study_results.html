@@ -3,10 +3,10 @@
   {% for case_study in page_obj %}
     <a href="{{ case_study.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
       {% if case_study.hero_image %}
-        {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-48 w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
+        {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
       {% endif %}
       <div class="flex flex-1 flex-col p-6">
-        {% if case_study.industry %}<p class="eyebrow">{{ case_study.industry.name }}</p>{% endif %}
+        <p class="eyebrow">{{ case_study.display_client }}</p>
         <p class="mt-3 text-lg font-semibold text-ink">{{ case_study.title }}</p>
         <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ case_study.excerpt|truncatewords:20 }}</p>
         {% if case_study.metrics.all %}
@@ -19,7 +19,7 @@
             {% endfor %}
           </div>
         {% endif %}
-        <p class="mt-auto pt-6 text-sm font-semibold text-ink">{{ case_study.display_client }} &rarr;</p>
+        <p class="mt-auto pt-6 text-sm font-semibold text-ink">View case study &rarr;</p>
       </div>
     </a>
   {% empty %}

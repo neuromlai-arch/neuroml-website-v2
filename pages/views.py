@@ -29,6 +29,18 @@ from taxonomy.models import Industry, ServiceCluster
 PREVIEW_SALT = "pages.preview"
 PREVIEW_MAX_AGE = 60 * 60 * 24  # 24 hours
 
+# The hero card stack — a curated capability overview, not a live Service
+# queryset: six fixed labels chosen for the hero specifically, including
+# iGaming/Full-Stack framing that doesn't map 1:1 onto real service titles.
+HERO_CAPABILITIES = [
+    "AI Agents & Automation",
+    "RAG & Knowledge Systems",
+    "Computer Vision",
+    "iGaming Platforms",
+    "Full-Stack Product",
+    "ML Engineering",
+]
+
 
 def _homepage_use_cases():
     homepage_use_cases = (
@@ -41,6 +53,25 @@ def _homepage_use_cases():
         {"industry": industry, "use_cases": list(cases)}
         for industry, cases in groupby(homepage_use_cases, key=lambda uc: uc.industry)
     ]
+
+
+def _homepage_stats(home_page):
+    """First three are always derived live — never stored, never stale.
+    The fourth has no database source, so it's the one editable field on
+    HomePage; omitted entirely (not a placeholder) when blank. See
+    pages/models.py's comment on stat_4_value for why."""
+    stats = [
+        {"value": CaseStudy.objects.live().count(), "label": "Published case studies"},
+        {
+            "value": CaseStudy.objects.live()
+            .filter(industry__slug="igaming-sweepstakes").count(),
+            "label": "Live iGaming platforms",
+        },
+        {"value": Technology.objects.live().count(), "label": "Technologies"},
+    ]
+    if home_page.stat_4_value:
+        stats.append({"value": home_page.stat_4_value, "label": home_page.stat_4_label})
+    return stats
 
 
 def home(request):
@@ -72,7 +103,6 @@ def home(request):
     context = {
         "home": home_page,
         "seo": home_page,
-        "hero_services": Service.objects.live().order_by("cluster__order", "order")[:3],
         "tech_partners": Partner.objects.filter(active=True).order_by("order"),
         "service_clusters": ServiceCluster.objects.order_by("order").prefetch_related(
             Prefetch(
@@ -95,6 +125,8 @@ def home(request):
         .order_by("order"),
         "home_faqs": FAQ.objects.filter(placement=FAQ.Placement.HOME, active=True).order_by("order"),
         "contact_form": ContactForm(initial=utm_initial(request)),
+        "stats": _homepage_stats(home_page),
+        "hero_capabilities": HERO_CAPABILITIES,
     }
     return render(request, "pages/home.html", context)
 

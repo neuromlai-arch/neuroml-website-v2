@@ -49,6 +49,17 @@ class HomePage(SingletonModel, SEOFields, TimeStampedModel):
     show_client_logos = models.BooleanField(default=True)
     show_testimonials = models.BooleanField(default=True)
 
+    # The first three stats-band figures are always derived live (published
+    # case studies, live iGaming platforms, technologies) — never stored,
+    # never stale. This fourth one has no database source (years in
+    # operation, team size, whatever comes up), so it's a plain editable
+    # pair instead. Leave stat_4_value blank to omit that slot entirely
+    # rather than show a placeholder.
+    stat_4_value = models.CharField(
+        max_length=24, blank=True, help_text="e.g. 6+. Leave blank to omit this slot.",
+    )
+    stat_4_label = models.CharField(max_length=80, blank=True, help_text="e.g. Years in operation.")
+
     capabilities_deck = models.FileField(
         upload_to="decks/", blank=True, help_text="The downloadable capabilities PDF.",
     )

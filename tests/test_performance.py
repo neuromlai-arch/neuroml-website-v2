@@ -25,8 +25,13 @@ guessing.
 Before/after this pass's select_related/caching work (cold-cache counts,
 i.e. before any of these pages had ever been requested): homepage 23,
 case study list 10, case study detail 18, service detail 9. Warm-cache
-counts (below, and what these tests assert): homepage 13, case study list
-9, case study detail 10, service detail 8.
+counts after that pass: homepage 13, case study list 9, case study detail
+10, service detail 8.
+
+Homepage moved to 15 in the frontend polish pass: the stats band added
+three COUNT queries (published case studies, live iGaming platforms,
+technologies) — real, deliberate, and cheap (COUNT, not a row fetch), not
+a regression.
 """
 
 from django.core.management import call_command
@@ -45,7 +50,7 @@ class HomepageQueryBudgetTests(TestCase):
     def test_homepage_query_count(self):
         url = reverse("home")
         self.client.get(url)
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(15):
             self.client.get(url)
 
 

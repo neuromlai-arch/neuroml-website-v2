@@ -19,6 +19,12 @@ class HomePageAdmin(ModelAdmin):
         ("Section toggles", {
             "fields": ["show_partners", "show_client_logos", "show_testimonials"],
         }),
+        ("Stats band", {
+            "fields": ["stat_4_value", "stat_4_label"],
+            "description": "Published case studies, live iGaming platforms, and technology "
+                            "count are computed automatically. This fourth figure is the only "
+                            "one entered by hand — leave the value blank to omit that slot.",
+        }),
         ("Downloads", {"fields": ["capabilities_deck"]}),
         SEO_FIELDSET,
     ]

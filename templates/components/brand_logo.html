@@ -9,19 +9,22 @@ set one, so the mark can be swapped from the admin without a deploy.
 Always wrapped in a link to home with an accessible name — the image
 itself is decorative (alt="") since the link already announces it.
 Pass link_class for layout classes on the wrapping <a> (e.g. flex alignment).
+Pass scaled_css_class for a size that swaps in reactively when the header's
+`scrolled` Alpine state (defined on <body>, see base.html) is true — used in
+the header only, so the logo scales down as the header shrinks.
 {% endcomment %}
 <a href="{% url 'home' %}" aria-label="{{ site_settings.site_name|default:'Home' }}" class="{{ link_class }}">
   {% if variant == "dark" %}
     {% if site_settings.logo_dark %}
-      <img src="{{ site_settings.logo_dark.url }}" alt="" class="{{ css_class }}">
+      <img src="{{ site_settings.logo_dark.url }}" alt="" {% if scaled_css_class %}:class="scrolled ? '{{ scaled_css_class }} transition-all duration-200' : '{{ css_class }} transition-all duration-200'"{% else %}class="{{ css_class }}"{% endif %}>
     {% else %}
-      <img src="{% static 'brand/logo-dark.svg' %}" alt="" class="{{ css_class }}">
+      <img src="{% static 'brand/logo-dark.svg' %}" alt="" {% if scaled_css_class %}:class="scrolled ? '{{ scaled_css_class }} transition-all duration-200' : '{{ css_class }} transition-all duration-200'"{% else %}class="{{ css_class }}"{% endif %}>
     {% endif %}
   {% else %}
     {% if site_settings.logo %}
-      <img src="{{ site_settings.logo.url }}" alt="" class="{{ css_class }}">
+      <img src="{{ site_settings.logo.url }}" alt="" {% if scaled_css_class %}:class="scrolled ? '{{ scaled_css_class }} transition-all duration-200' : '{{ css_class }} transition-all duration-200'"{% else %}class="{{ css_class }}"{% endif %}>
     {% else %}
-      <img src="{% static 'brand/logo.svg' %}" alt="" class="{{ css_class }}">
+      <img src="{% static 'brand/logo.svg' %}" alt="" {% if scaled_css_class %}:class="scrolled ? '{{ scaled_css_class }} transition-all duration-200' : '{{ css_class }} transition-all duration-200'"{% else %}class="{{ css_class }}"{% endif %}>
     {% endif %}
   {% endif %}
 </a>
