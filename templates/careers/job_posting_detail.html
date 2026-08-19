@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article>
+  <header class="border-b border-hairline bg-white bg-grid-surface py-24 lg:py-32">
+    <div class="mx-auto max-w-3xl px-6 lg:px-8">
+      {% if object.department %}<p class="eyebrow">{{ object.department }}</p>{% endif %}
+      <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+      <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-secondary">
+        <span>{{ object.location|default:"Location flexible" }}</span>
+        <span>{{ object.get_work_mode_display }}</span>
+        <span>{{ object.get_employment_type_display }}</span>
+        {% if object.experience_label %}<span>{{ object.experience_label }} experience</span>{% endif %}
+        {% if not object.is_open %}<span class="text-ink-muted">Closed</span>{% endif %}
+      </div>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-secondary">{{ object.summary }}</p>
+    </div>
+  </header>
+
+  <div class="mx-auto max-w-3xl px-6 py-16 lg:px-8">
+    <div class="prose prose-neutral max-w-none space-y-10 text-ink-body">
+      {% if object.responsibilities %}
+        <div>
+          <h2 class="font-serif text-2xl text-ink">Responsibilities</h2>
+          <div class="mt-4 leading-relaxed">{{ object.responsibilities|safe }}</div>
+        </div>
+      {% endif %}
+      {% if object.requirements %}
+        <div>
+          <h2 class="font-serif text-2xl text-ink">Requirements</h2>
+          <div class="mt-4 leading-relaxed">{{ object.requirements|safe }}</div>
+        </div>
+      {% endif %}
+      {% if object.nice_to_have %}
+        <div>
+          <h2 class="font-serif text-2xl text-ink">Nice to have</h2>
+          <div class="mt-4 leading-relaxed">{{ object.nice_to_have|safe }}</div>
+        </div>
+      {% endif %}
+      {% if object.benefits %}
+        <div>
+          <h2 class="font-serif text-2xl text-ink">Benefits</h2>
+          <div class="mt-4 leading-relaxed">{{ object.benefits|safe }}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card mt-16 p-8">
+      <h2 class="font-serif text-2xl text-ink">Apply for this role</h2>
+      {% if object.is_open %}
+        <div id="job-application-form">
+          {% include "careers/_job_application_form.html" %}
+        </div>
+        {% if object.apply_email %}
+          <p class="mt-6 text-xs text-ink-muted">
+            Prefer email? Send your application to
+            <a href="mailto:{{ object.apply_email }}?subject=Application: {{ object.title|urlencode }}" class="font-semibold text-ink hover:underline hover:underline-offset-4">{{ object.apply_email }}</a>.
+          </p>
+        {% endif %}
+      {% else %}
+        <p class="mt-3 text-sm text-ink-muted">This role is no longer accepting applications.</p>
+      {% endif %}
+    </div>
+  </div>
+</article>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  "title": "{{ object.title|escapejs }}",
+  "description": "{{ object.summary|escapejs }}",
+  {% if object.published_at %}"datePosted": "{{ object.published_at|date:'c' }}",{% endif %}
+  "employmentType": "{% if object.employment_type == 'full_time' %}FULL_TIME{% elif object.employment_type == 'part_time' %}PART_TIME{% elif object.employment_type == 'contract' %}CONTRACTOR{% elif object.employment_type == 'internship' %}INTERN{% endif %}",
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": "{{ site_settings.site_name|default:"[TODO: company name]"|escapejs }}"
+  },
+  {% if object.location %}"jobLocation": {
+    "@type": "Place",
+    "address": "{{ object.location|escapejs }}"
+  },{% endif %}
+  "validThrough": null
+}
+</script>
+{% endblock %}

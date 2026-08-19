@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="flex min-h-[60vh] items-center bg-white bg-grid-surface">
+  <div class="mx-auto max-w-xl px-6 py-24 text-center lg:px-8">
+    <p class="eyebrow">Subscribed</p>
+    <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">You're confirmed</h1>
+    <p class="mt-6 text-lg leading-relaxed text-ink-secondary">
+      Thanks — {{ subscriber.email }} will now receive our updates.
+    </p>
+    <div class="mt-10 flex justify-center">
+      {% include "components/pill_cta.html" with label="Back to home" url="/" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

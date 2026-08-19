@@ -1,0 +1,24 @@
+{% load imaging %}
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {% for webinar in page_obj %}
+    <a href="{{ webinar.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
+      {% if webinar.hero_image %}
+        {% responsive_img webinar.hero_image alt=webinar.hero_alt css_class="h-40 w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
+      {% endif %}
+      <div class="flex flex-1 flex-col p-6">
+        <span class="inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold
+                     {% if webinar.is_upcoming %}bg-ink text-white{% else %}border border-hairline text-ink-secondary{% endif %}">
+          {% if webinar.is_upcoming %}Upcoming{% elif webinar.is_on_demand %}On demand{% else %}Past{% endif %}
+        </span>
+        <p class="mt-3 text-lg font-semibold text-ink">{{ webinar.title }}</p>
+        {% if webinar.starts_at %}
+          <p class="mt-2 text-sm text-ink-secondary">{{ webinar.starts_at|date:"D, M j, Y" }}{% if webinar.duration_minutes %} &middot; {{ webinar.duration_minutes }} min{% endif %}</p>
+        {% endif %}
+        <p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ webinar.excerpt|truncatewords:18 }}</p>
+      </div>
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No webinars match those filters." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

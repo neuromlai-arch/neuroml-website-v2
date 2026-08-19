@@ -1,0 +1,15 @@
+{% load imaging %}
+<div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+  {% for tech in page_obj %}
+    <a href="{{ tech.get_absolute_url }}" class="card card-hover flex flex-col items-center gap-3 p-6 text-center">
+      {% if tech.logo %}
+        {% responsive_img tech.logo alt=tech.name css_class="logo-mono h-10 w-auto object-contain" %}
+      {% endif %}
+      <p class="text-sm font-semibold text-ink">{{ tech.name }}</p>
+      {% if tech.tagline %}<p class="text-xs text-ink-secondary">{{ tech.tagline }}</p>{% endif %}
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No technologies match this filter yet." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

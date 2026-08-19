@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+  <p class="eyebrow">Technologies</p>
+  <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Tools we build on</h1>
+
+  {% if services %}
+    <div class="mt-10 flex flex-wrap gap-2 border-b border-hairline pb-6">
+      <button type="button"
+        hx-get="{% url 'technology_list' %}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+        class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_service %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+        All
+      </button>
+      {% for service in services %}
+        <button type="button"
+          hx-get="{% url 'technology_list' %}?service={{ service.slug }}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+          class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_service == service.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+          {{ service.title }}
+        </button>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div id="results" class="mt-14">
+    {% include "solutions/_technology_results.html" %}
+  </div>
+</section>
+{% endblock %}

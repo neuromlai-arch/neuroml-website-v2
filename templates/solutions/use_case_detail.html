@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article class="mx-auto max-w-3xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal">
+    <p class="eyebrow">{{ object.industry.name }}</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-secondary">{{ object.summary }}</p>
+  </header>
+
+  {% if object.hero_image %}
+    <div class="reveal mt-10">
+      {% responsive_img object.hero_image alt="" css_class="w-full rounded-card object-cover" sizes="768px" %}
+    </div>
+  {% endif %}
+
+  {% if object.body %}
+    <div class="reveal prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal prose-a:text-ink">
+      {{ object.body|safe }}
+    </div>
+  {% endif %}
+
+  {% if object.related_service %}
+    <div class="mt-10 border-t border-hairline pt-6">
+      <a href="{{ object.related_service.get_absolute_url }}" class="text-sm font-semibold text-ink hover:underline hover:underline-offset-4">
+        See the related service: {{ object.related_service.title }} &rarr;
+      </a>
+    </div>
+  {% endif %}
+
+  <div class="mt-10">
+    {% include "components/pill_cta.html" with label=object.cta_label url=object.cta_url|default:"/contact/#contact-form" %}
+  </div>
+</article>
+{% endblock %}

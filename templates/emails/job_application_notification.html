@@ -1,0 +1,18 @@
+{% extends "emails/_base.html" %}
+
+{% block eyebrow %}New application{% endblock %}
+
+{% block body %}
+<h1 style="margin:0 0 16px;font-size:22px;font-weight:400;color:#0B0B0B;">
+  {{ application.full_name }} — {{ application.job.title }}
+</h1>
+<table role="presentation" width="100%" style="font-size:14px;line-height:1.6;color:#1A1A1A;">
+  <tr><td style="padding:4px 0;color:#6B6B6B;width:140px;">Email</td><td>{{ application.email }}</td></tr>
+  {% if application.phone %}<tr><td style="padding:4px 0;color:#6B6B6B;">Phone</td><td>{{ application.phone }}</td></tr>{% endif %}
+  {% if application.portfolio_url %}<tr><td style="padding:4px 0;color:#6B6B6B;">Portfolio</td><td>{{ application.portfolio_url }}</td></tr>{% endif %}
+</table>
+{% if application.cover_note %}
+  <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #E5E5E5;white-space:pre-line;font-size:14px;line-height:1.6;">{{ application.cover_note }}</p>
+{% endif %}
+<p style="margin:24px 0 0;font-size:12px;color:#9B9B9B;">Resume is attached in the admin — sign in to download it via the signed link.</p>
+{% endblock %}

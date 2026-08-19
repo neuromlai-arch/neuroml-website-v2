@@ -1,0 +1,29 @@
+{% load imaging %}
+<div class="grid gap-6 lg:grid-cols-3">
+  {% for case_study in page_obj %}
+    <a href="{{ case_study.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
+      {% if case_study.hero_image %}
+        {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-48 w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
+      {% endif %}
+      <div class="flex flex-1 flex-col p-6">
+        {% if case_study.industry %}<p class="eyebrow">{{ case_study.industry.name }}</p>{% endif %}
+        <p class="mt-3 text-lg font-semibold text-ink">{{ case_study.title }}</p>
+        <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ case_study.excerpt|truncatewords:20 }}</p>
+        {% if case_study.metrics.all %}
+          <div class="mt-6 flex gap-6 border-t border-hairline pt-6">
+            {% for metric in case_study.metrics.all|slice:":2" %}
+              <div>
+                <p class="font-serif text-3xl text-ink">{{ metric.value }}</p>
+                <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <p class="mt-auto pt-6 text-sm font-semibold text-ink">{{ case_study.display_client }} &rarr;</p>
+      </div>
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No case studies match those filters." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

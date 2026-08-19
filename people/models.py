@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 from core.models import TimeStampedModel
 
@@ -26,3 +27,6 @@ class TeamMember(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("team_member_detail", kwargs={"slug": self.slug})

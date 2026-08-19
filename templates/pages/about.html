@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="bg-white bg-grid-surface py-24 lg:py-32">
+  <div class="mx-auto max-w-3xl px-6 text-center lg:px-8">
+    <p class="eyebrow">About us</p>
+    <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">[TODO: about-page heading]</h1>
+    <p class="mt-6 text-lg leading-relaxed text-ink-secondary">[TODO: about-page intro copy]</p>
+  </div>
+</section>
+
+{% if team_members %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <p class="eyebrow">The team</p>
+      <h2 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">People behind the work</h2>
+      <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {% for member in team_members %}
+          <a href="{{ member.get_absolute_url }}" class="card card-hover overflow-hidden">
+            {% if member.photo %}
+              {% responsive_img member.photo alt=member.name css_class="h-56 w-full object-cover grayscale" sizes="(min-width: 1024px) 25vw, 50vw" %}
+            {% endif %}
+            <div class="p-5">
+              <p class="text-sm font-semibold text-ink">{{ member.name }}</p>
+              {% if member.role %}<p class="mt-1 text-xs text-ink-secondary">{{ member.role }}</p>{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{% if process_steps %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <p class="eyebrow">How we work</p>
+      <h2 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Our process</h2>
+      <ol class="mt-14 grid gap-10 border-t border-hairline pt-10 md:grid-cols-5 md:gap-6">
+        {% for step in process_steps %}
+          <li>
+            <p class="font-serif text-3xl text-ink-muted">{{ forloop.counter|stringformat:"02d" }}</p>
+            <p class="mt-3 text-base font-semibold text-ink">{{ step.title }}</p>
+            {% if step.description %}
+              <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ step.description }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </section>
+{% endif %}
+
+{% if engagement_models %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <p class="eyebrow">Engagement models</p>
+      <h2 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Work with us your way</h2>
+      <div class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {% for model in engagement_models %}
+          <div class="card p-8">
+            {% if model.icon %}{% responsive_img model.icon alt="" css_class="h-8 w-8" %}{% endif %}
+            <p class="mt-4 text-base font-semibold text-ink">{{ model.title }}</p>
+            {% if model.description %}
+              <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ model.description }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{% if offices %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <p class="eyebrow">Where we are</p>
+      <h2 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Our offices</h2>
+      <div class="mt-14 grid gap-6 md:grid-cols-2">
+        {% for office in offices %}
+          <div class="card overflow-hidden">
+            {% if office.image %}
+              {% responsive_img office.image alt=office.city css_class="h-48 w-full object-cover" sizes="(min-width: 768px) 50vw, 100vw" %}
+            {% endif %}
+            <div class="p-6">
+              <p class="text-base font-semibold text-ink">
+                {{ office.city }}{% if office.country %}, {{ office.country }}{% endif %}
+                {% if office.is_headquarters %}<span class="eyebrow ml-2">HQ</span>{% endif %}
+              </p>
+              <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-secondary">{{ office.address }}</p>
+              {% if office.phone %}<p class="mt-2 text-sm text-ink-secondary">{{ office.phone }}</p>{% endif %}
+              {% if office.email %}<p class="text-sm text-ink-secondary">{{ office.email }}</p>{% endif %}
+              {% if office.map_url %}
+                <a href="{{ office.map_url }}" class="mt-3 inline-block text-sm font-semibold text-ink hover:underline hover:underline-offset-4">View on map &rarr;</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

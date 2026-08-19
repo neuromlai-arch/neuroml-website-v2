@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<section class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+  <div class="reveal max-w-2xl">
+    <p class="eyebrow">Insights</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Webinars</h1>
+  </div>
+
+  {% if tags %}
+    <div class="mt-10 flex flex-wrap gap-2" role="group" aria-label="Filter by topic">
+      <a href="{% url 'webinar_list' %}"
+         hx-get="{% url 'webinar_list' %}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+         class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_tag %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+        All topics
+      </a>
+      {% for tag in tags %}
+        <a href="{% url 'webinar_list' %}?tag={{ tag.slug }}"
+           hx-get="{% url 'webinar_list' %}?tag={{ tag.slug }}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+           class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_tag == tag.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+          {{ tag.name }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div id="results" class="mt-12">
+    {% include "insights/_webinar_results.html" %}
+  </div>
+</section>
+{% endblock %}

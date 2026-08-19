@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<article class="mx-auto max-w-4xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal">
+    {% if object.industry %}<p class="eyebrow">{{ object.industry.name }}</p>{% endif %}
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    <div class="mt-6 flex items-center gap-3">
+      {% if object.client_logo %}
+        {% responsive_img object.client_logo alt=object.display_client css_class="h-8 w-auto logo-mono" sizes="120px" %}
+      {% endif %}
+      <p class="text-sm font-semibold text-ink-secondary">{{ object.display_client }}</p>
+    </div>
+  </header>
+
+  {% if object.hero_image %}
+    <div class="reveal mt-10">
+      {% responsive_img object.hero_image alt=object.hero_alt css_class="w-full rounded-card object-cover" sizes="896px" %}
+    </div>
+  {% endif %}
+
+  {% if object.metrics.all %}
+    <div class="reveal card mt-10 grid grid-cols-2 gap-6 p-8 sm:grid-cols-4">
+      {% for metric in object.metrics.all %}
+        <div>
+          <p class="font-serif text-4xl text-ink">{{ metric.value }}</p>
+          <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="reveal mt-14 grid gap-10 sm:grid-cols-3">
+    {% if object.challenge %}
+      <section>
+        <h2 class="font-serif text-2xl text-ink">The challenge</h2>
+        <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.challenge|safe }}</div>
+      </section>
+    {% endif %}
+    {% if object.approach %}
+      <section>
+        <h2 class="font-serif text-2xl text-ink">Our approach</h2>
+        <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.approach|safe }}</div>
+      </section>
+    {% endif %}
+    {% if object.outcome %}
+      <section>
+        <h2 class="font-serif text-2xl text-ink">The outcome</h2>
+        <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.outcome|safe }}</div>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if object.tech_stack.all %}
+    <div class="mt-14 border-t border-hairline pt-8">
+      <p class="eyebrow">Tech stack</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {% for tag in object.tech_stack.all %}
+          <span class="rounded-full border border-hairline px-3 py-1 text-xs text-ink-secondary">{{ tag.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</article>
+
+{% if object.testimonials.all %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-4xl px-6 lg:px-8">
+      {% for testimonial in object.testimonials.all %}
+        <figure class="reveal card p-8">
+          <blockquote class="font-serif text-2xl leading-snug text-ink">&ldquo;{{ testimonial.quote }}&rdquo;</blockquote>
+          <figcaption class="mt-6 flex items-center gap-3 border-t border-hairline pt-6">
+            {% if testimonial.avatar %}
+              {% responsive_img testimonial.avatar alt="" css_class="h-10 w-10 rounded-full object-cover grayscale" sizes="40px" %}
+            {% endif %}
+            <div>
+              <p class="text-sm font-semibold text-ink">{{ testimonial.author_name }}</p>
+              <p class="text-xs text-ink-secondary">{{ testimonial.author_role }}{% if testimonial.company %} &middot; {{ testimonial.company }}{% endif %}</p>
+            </div>
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

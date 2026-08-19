@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article class="mx-auto max-w-3xl px-6 py-24 lg:px-8">
+  <div class="flex flex-col items-start gap-8 sm:flex-row sm:items-center">
+    {% if object.photo %}
+      <div class="h-28 w-28 shrink-0 overflow-hidden rounded-full">
+        {% responsive_img object.photo alt=object.name css_class="h-28 w-28 rounded-full object-cover grayscale" sizes="112px" %}
+      </div>
+    {% endif %}
+    <div>
+      <h1 class="font-serif text-4xl text-ink">{{ object.name }}</h1>
+      {% if object.role %}<p class="mt-2 text-lg text-ink-secondary">{{ object.role }}</p>{% endif %}
+      {% if object.linkedin_url %}
+        <a href="{{ object.linkedin_url }}" class="mt-4 inline-block text-sm font-semibold text-ink hover:underline hover:underline-offset-4" rel="noopener" target="_blank">
+          LinkedIn &rarr;
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if object.bio %}
+    <div class="mt-12 max-w-2xl text-base leading-relaxed text-ink-body">{{ object.bio|linebreaks }}</div>
+  {% endif %}
+
+  {% if recent_posts or recent_case_studies %}
+    <div class="mt-16 border-t border-hairline pt-10">
+      <p class="eyebrow">Recent writing</p>
+      <ul class="mt-6 space-y-4">
+        {% for post in recent_posts %}
+          <li><a href="{{ post.get_absolute_url }}" class="text-base font-semibold text-ink hover:underline hover:underline-offset-4">{{ post.title }}</a></li>
+        {% endfor %}
+        {% for case_study in recent_case_studies %}
+          <li><a href="{{ case_study.get_absolute_url }}" class="text-base font-semibold text-ink hover:underline hover:underline-offset-4">{{ case_study.title }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</article>
+{% endblock %}

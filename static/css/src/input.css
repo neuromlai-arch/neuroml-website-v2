@@ -89,4 +89,10 @@
   .form-success {
     @apply flex items-center gap-1.5 text-sm text-success;
   }
+
+  /* Honeypot: off-screen rather than display:none, which bots increasingly
+     know to skip. Never in the tab order, never announced to screen readers. */
+  .honeypot-field {
+    @apply absolute -left-[9999px] top-auto h-px w-px overflow-hidden;
+  }
 }

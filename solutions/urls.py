@@ -1,25 +1,15 @@
 from django.urls import path
 
-from core.views import stub_detail
-from solutions.models import HireRole, Product, Service, Technology, UseCase
+from solutions import views
 
 urlpatterns = [
-    path(
-        "services/<slug:slug>/", stub_detail, {"model": Service}, name="service_detail",
-    ),
-    path(
-        "use-cases/<slug:slug>/", stub_detail, {"model": UseCase}, name="use_case_detail",
-    ),
-    path(
-        "products/<slug:slug>/", stub_detail, {"model": Product}, name="product_detail",
-    ),
-    path(
-        "technologies/<slug:slug>/",
-        stub_detail,
-        {"model": Technology},
-        name="technology_detail",
-    ),
-    path(
-        "hire/<slug:slug>/", stub_detail, {"model": HireRole}, name="hire_role_detail",
-    ),
+    path("services/", views.service_list, name="service_list"),
+    path("services/<slug:slug>/", views.service_detail, name="service_detail"),
+    path("use-cases/<slug:slug>/", views.use_case_detail, name="use_case_detail"),
+    path("products/", views.product_list, name="product_list"),
+    path("products/<slug:slug>/", views.product_detail, name="product_detail"),
+    path("technologies/", views.technology_list, name="technology_list"),
+    path("technologies/<slug:slug>/", views.technology_detail, name="technology_detail"),
+    path("hire/", views.hire_role_list, name="hire_role_list"),
+    path("hire/<slug:slug>/", views.hire_role_detail, name="hire_role_detail"),
 ]

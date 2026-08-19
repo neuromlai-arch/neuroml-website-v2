@@ -1,0 +1,15 @@
+{% load imaging %}
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {% for role in page_obj %}
+    <a href="{{ role.get_absolute_url }}" class="card card-hover flex flex-col p-8">
+      <p class="text-lg font-semibold text-ink">{{ role.title }}</p>
+      {% if role.tagline %}<p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ role.tagline }}</p>{% endif %}
+      {% if role.starting_rate %}
+        <p class="mt-6 text-sm font-semibold text-ink">From {{ role.starting_rate }}</p>
+      {% endif %}
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No open roles match this filter yet." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

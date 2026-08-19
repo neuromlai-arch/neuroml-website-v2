@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="bg-white bg-grid-surface py-24 lg:py-32">
+  <div class="mx-auto grid max-w-5xl gap-16 px-6 lg:grid-cols-2 lg:px-8">
+    <div>
+      <p class="eyebrow">Book a demo</p>
+      <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">See it in action</h1>
+      <p class="mt-6 max-w-md text-lg leading-relaxed text-ink-secondary">
+        [TODO: demo-page intro copy — what a strategy call covers, typical length, who joins from our side.]
+      </p>
+    </div>
+    <div id="demo-form">
+      {% include "marketing/_demo_form_fields.html" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

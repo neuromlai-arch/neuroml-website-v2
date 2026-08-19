@@ -1,0 +1,36 @@
+{% comment %}
+Usage: {% include "components/breadcrumbs.html" with items=breadcrumbs %}
+`items` is a list of {"label": ..., "url": ...} dicts, "Home" first, current
+page last with url=None. Emits both the visible trail and matching
+BreadcrumbList JSON-LD.
+{% endcomment %}
+<nav aria-label="Breadcrumb" class="border-b border-hairline bg-white">
+  <ol class="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-6 py-4 text-xs text-ink-secondary lg:px-8">
+    {% for item in items %}
+      <li class="flex items-center gap-2">
+        {% if not forloop.first %}<span aria-hidden="true">/</span>{% endif %}
+        {% if item.url and not forloop.last %}
+          <a href="{{ item.url }}" class="hover:text-ink hover:underline hover:underline-offset-4">{{ item.label }}</a>
+        {% else %}
+          <span aria-current="page" class="text-ink">{{ item.label }}</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {% for item in items %}
+    {
+      "@type": "ListItem",
+      "position": {{ forloop.counter }},
+      "name": "{{ item.label|escapejs }}"{% if item.url %},
+      "item": "{{ request.scheme }}://{{ request.get_host }}{{ item.url }}"{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>

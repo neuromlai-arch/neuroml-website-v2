@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article class="mx-auto max-w-4xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal">
+    <p class="eyebrow">Hire</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    {% if object.tagline %}
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-secondary">{{ object.tagline }}</p>
+    {% endif %}
+    {% if object.starting_rate %}
+      <p class="mt-4 text-sm font-semibold text-ink">Starting from {{ object.starting_rate }}</p>
+    {% endif %}
+  </header>
+
+  {% if object.hero_image %}
+    <div class="reveal mt-10">
+      {% responsive_img object.hero_image alt="" css_class="w-full rounded-card object-cover" sizes="896px" %}
+    </div>
+  {% endif %}
+
+  {% if object.summary %}
+    <p class="reveal mt-10 max-w-2xl text-base leading-relaxed text-ink-secondary">{{ object.summary }}</p>
+  {% endif %}
+
+  {% if object.body %}
+    <div class="reveal prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal prose-a:text-ink">
+      {{ object.body|safe }}
+    </div>
+  {% endif %}
+
+  {% if object.skills.all %}
+    <div class="mt-10 border-t border-hairline pt-6">
+      <p class="eyebrow">Skills</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {% for skill in object.skills.all %}
+          <a href="{{ skill.get_absolute_url }}" class="rounded-full border border-hairline px-3 py-1 text-xs text-ink-secondary hover:border-ink hover:text-ink">{{ skill.name }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if object.related_services.all %}
+    <div class="mt-6">
+      <p class="eyebrow">Related services</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {% for service in object.related_services.all %}
+          <a href="{{ service.get_absolute_url }}" class="rounded-full border border-hairline px-3 py-1 text-xs text-ink-secondary hover:border-ink hover:text-ink">{{ service.title }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="mt-14">
+    {% include "components/pill_cta.html" with label="Talk to an expert" url="/contact/#contact-form" %}
+  </div>
+</article>
+{% endblock %}

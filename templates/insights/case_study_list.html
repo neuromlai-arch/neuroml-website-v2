@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<section class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+  <div class="reveal max-w-2xl">
+    <p class="eyebrow">Insights</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Case studies</h1>
+  </div>
+
+  {% if industries %}
+    <div class="mt-10 flex flex-wrap gap-2" role="group" aria-label="Filter by industry">
+      <a href="{% url 'case_study_list' %}"
+         hx-get="{% url 'case_study_list' %}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+         class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_industry %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+        All industries
+      </a>
+      {% for industry in industries %}
+        <a href="{% url 'case_study_list' %}?industry={{ industry.slug }}"
+           hx-get="{% url 'case_study_list' %}?industry={{ industry.slug }}" hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+           class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_industry == industry.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+          {{ industry.name }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div id="results" class="mt-12">
+    {% include "insights/_case_study_results.html" %}
+  </div>
+</section>
+{% endblock %}

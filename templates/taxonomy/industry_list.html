@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+  <p class="eyebrow">Industries</p>
+  <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Industries we work in</h1>
+
+  <div class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {% for industry in industries %}
+      <a href="{{ industry.get_absolute_url }}" class="reveal card card-hover flex flex-col p-8">
+        {% if industry.icon %}
+          {% responsive_img industry.icon alt=industry.name css_class="h-10 w-10 object-contain" %}
+        {% endif %}
+        <p class="mt-4 text-lg font-semibold text-ink">{{ industry.name }}</p>
+        {% if industry.blurb %}
+          <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ industry.blurb }}</p>
+        {% endif %}
+        <span class="mt-auto pt-6 text-sm font-semibold text-ink">Explore &rarr;</span>
+      </a>
+    {% empty %}
+      {% include "components/empty_state.html" with message="[TODO: create industries]" %}
+    {% endfor %}
+  </div>
+  {% include "components/pagination.html" with page_obj=page_obj %}
+</section>
+{% endblock %}

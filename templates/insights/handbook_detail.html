@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<article class="mx-auto grid max-w-5xl gap-12 px-6 py-24 lg:grid-cols-[2fr,1fr] lg:px-8 lg:py-32">
+  <div>
+    <p class="eyebrow">Handbook{% if object.page_count %} &middot; {{ object.page_count }} pages{% endif %}</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    {% if object.excerpt %}
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-secondary">{{ object.excerpt }}</p>
+    {% endif %}
+    <div class="prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal">
+      {{ object.body|safe }}
+    </div>
+  </div>
+
+  <aside class="reveal h-fit card p-8">
+    {% if object.cover_image %}
+      {% responsive_img object.cover_image alt=object.hero_alt css_class="w-full rounded-card object-cover" sizes="320px" %}
+    {% endif %}
+    <div class="mt-6">
+      {% if object.gated %}
+        <p class="text-sm font-semibold text-ink">Get the PDF</p>
+        <p class="mt-2 text-sm text-ink-secondary">Tell us where to send it.</p>
+        <div id="handbook-gate-form" class="mt-4">
+          {% include "insights/_handbook_gate_form.html" %}
+        </div>
+      {% elif object.pdf %}
+        <a href="{{ object.pdf.url }}" class="btn-pill group" download>
+          <span>Download PDF</span>
+          <span class="btn-pill__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </a>
+      {% else %}
+        <p class="text-sm text-ink-muted">[TODO: upload the PDF for this handbook]</p>
+      {% endif %}
+    </div>
+  </aside>
+</article>
+{% endblock %}

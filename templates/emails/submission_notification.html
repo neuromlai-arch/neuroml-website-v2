@@ -1,0 +1,23 @@
+{% extends "emails/_base.html" %}
+
+{% block eyebrow %}New {{ submission.get_source_display }} enquiry{% endblock %}
+
+{% block body %}
+<h1 style="margin:0 0 16px;font-size:22px;font-weight:400;color:#0B0B0B;">
+  {{ submission.first_name }} {{ submission.last_name }}
+</h1>
+<table role="presentation" width="100%" style="font-size:14px;line-height:1.6;color:#1A1A1A;">
+  <tr><td style="padding:4px 0;color:#6B6B6B;width:140px;">Email</td><td>{{ submission.email }}</td></tr>
+  {% if submission.phone %}<tr><td style="padding:4px 0;color:#6B6B6B;">Phone</td><td>{{ submission.phone }}</td></tr>{% endif %}
+  {% if submission.company %}<tr><td style="padding:4px 0;color:#6B6B6B;">Company</td><td>{{ submission.company }}</td></tr>{% endif %}
+  {% if submission.service_interest %}<tr><td style="padding:4px 0;color:#6B6B6B;">Interested in</td><td>{{ submission.service_interest }}</td></tr>{% endif %}
+  {% if submission.project_stage %}<tr><td style="padding:4px 0;color:#6B6B6B;">Project stage</td><td>{{ submission.get_project_stage_display }}</td></tr>{% endif %}
+  {% if submission.budget_range %}<tr><td style="padding:4px 0;color:#6B6B6B;">Budget</td><td>{{ submission.get_budget_range_display }}</td></tr>{% endif %}
+  {% if submission.handbook %}<tr><td style="padding:4px 0;color:#6B6B6B;">Handbook</td><td>{{ submission.handbook }}</td></tr>{% endif %}
+  <tr><td style="padding:4px 0;color:#6B6B6B;">Source</td><td>{{ submission.get_source_display }}{% if submission.source_url %} &middot; {{ submission.source_url }}{% endif %}</td></tr>
+  {% if submission.utm_source %}<tr><td style="padding:4px 0;color:#6B6B6B;">UTM</td><td>{{ submission.utm_source }} / {{ submission.utm_medium }} / {{ submission.utm_campaign }}</td></tr>{% endif %}
+</table>
+{% if submission.message %}
+  <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #E5E5E5;white-space:pre-line;font-size:14px;line-height:1.6;">{{ submission.message }}</p>
+{% endif %}
+{% endblock %}

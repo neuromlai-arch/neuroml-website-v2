@@ -1,0 +1,25 @@
+{% comment %}
+Grid + pagination only — rendered directly for the HTMX partial response, and
+included by job_posting_list.html for the full-page render.
+{% endcomment %}
+<div id="job-results">
+  <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {% for job in page_obj %}
+      <a href="{{ job.get_absolute_url }}" class="card card-hover flex flex-col p-6">
+        {% if job.department %}<p class="eyebrow">{{ job.department }}</p>{% endif %}
+        <p class="mt-3 text-lg font-semibold text-ink">{{ job.title }}</p>
+        <p class="mt-2 text-sm text-ink-secondary">
+          {{ job.location|default:"Location flexible" }} &middot; {{ job.get_work_mode_display }} &middot; {{ job.get_employment_type_display }}
+        </p>
+        {% if job.experience_label %}
+          <p class="mt-2 text-xs text-ink-muted">{{ job.experience_label }} experience</p>
+        {% endif %}
+        <span class="mt-6 text-sm font-semibold text-ink">View role &rarr;</span>
+      </a>
+    {% empty %}
+      {% include "components/empty_state.html" with message="No open roles match those filters right now." %}
+    {% endfor %}
+  </div>
+
+  {% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#job-results" %}
+</div>

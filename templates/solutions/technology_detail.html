@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article class="mx-auto max-w-3xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal flex items-center gap-4">
+    {% if object.logo %}
+      {% responsive_img object.logo alt=object.name css_class="h-12 w-12 object-contain" %}
+    {% endif %}
+    <div>
+      <h1 class="font-serif text-4xl text-ink">{{ object.name }}</h1>
+      {% if object.tagline %}<p class="mt-1 text-sm text-ink-secondary">{{ object.tagline }}</p>{% endif %}
+    </div>
+  </header>
+
+  {% if object.body %}
+    <div class="reveal prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal prose-a:text-ink">
+      {{ object.body|safe }}
+    </div>
+  {% endif %}
+
+  {% if object.service %}
+    <div class="mt-10 border-t border-hairline pt-6">
+      <a href="{{ object.service.get_absolute_url }}" class="text-sm font-semibold text-ink hover:underline hover:underline-offset-4">
+        &larr; Part of {{ object.service.title }}
+      </a>
+    </div>
+  {% endif %}
+</article>
+{% endblock %}

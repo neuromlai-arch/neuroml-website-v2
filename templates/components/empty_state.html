@@ -1,0 +1,6 @@
+{% comment %}
+Usage: {% include "components/empty_state.html" with message="No results match those filters." %}
+{% endcomment %}
+<div class="col-span-full rounded-card border border-dashed border-hairline px-8 py-16 text-center">
+  <p class="text-sm text-ink-muted">{{ message|default:"Nothing here yet." }}</p>
+</div>

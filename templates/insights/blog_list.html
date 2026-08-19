@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<section class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+  <div class="reveal max-w-2xl">
+    <p class="eyebrow">Insights</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Blog</h1>
+  </div>
+
+  <div class="mt-10 space-y-4">
+    <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by industry">
+      <a href="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
+         hx-get="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
+         hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+         class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_industry %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+        All industries
+      </a>
+      {% for industry in industries %}
+        <a href="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
+           hx-get="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
+           hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+           class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_industry == industry.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+          {{ industry.name }}
+        </a>
+      {% endfor %}
+    </div>
+    {% if tags %}
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag">
+        <a href="{% url 'blog_list' %}{% if active_industry %}?industry={{ active_industry }}{% endif %}"
+           hx-get="{% url 'blog_list' %}{% if active_industry %}?industry={{ active_industry }}{% endif %}"
+           hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+           class="rounded-full border px-3 py-1.5 text-xs font-semibold transition {% if not active_tag %}border-ink text-ink{% else %}border-hairline text-ink-secondary hover:border-ink{% endif %}">
+          All topics
+        </a>
+        {% for tag in tags %}
+          <a href="{% url 'blog_list' %}?tag={{ tag.slug }}{% if active_industry %}&industry={{ active_industry }}{% endif %}"
+             hx-get="{% url 'blog_list' %}?tag={{ tag.slug }}{% if active_industry %}&industry={{ active_industry }}{% endif %}"
+             hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+             class="rounded-full border px-3 py-1.5 text-xs font-semibold transition {% if active_tag == tag.slug %}border-ink text-ink{% else %}border-hairline text-ink-secondary hover:border-ink{% endif %}">
+            {{ tag.name }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="results" class="mt-12">
+    {% include "insights/_blog_results.html" %}
+  </div>
+</section>
+{% endblock %}

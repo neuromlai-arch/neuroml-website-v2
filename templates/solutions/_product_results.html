@@ -1,0 +1,18 @@
+{% load imaging %}
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {% for product in page_obj %}
+    <a href="{{ product.get_absolute_url }}" class="card card-hover flex flex-col overflow-hidden">
+      {% if product.card_image %}
+        {% responsive_img product.card_image alt=product.title css_class="h-44 w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
+      {% endif %}
+      <div class="flex flex-1 flex-col p-6">
+        <p class="text-lg font-semibold text-ink">{{ product.title }}</p>
+        {% if product.tagline %}<p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ product.tagline }}</p>{% endif %}
+        <span class="mt-6 text-sm font-semibold text-ink">Learn more &rarr;</span>
+      </div>
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No products match this filter yet." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

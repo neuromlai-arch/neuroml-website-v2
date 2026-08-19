@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "django_ckeditor_5",
+    "easy_thumbnails",
+    "django_q",
     # local apps
     "core",
     "taxonomy",
@@ -61,6 +63,8 @@ TEMPLATES = [
                 "core.context_processors.megamenu",
                 "core.context_processors.footer_chrome",
                 "core.context_processors.site_settings",
+                "core.context_processors.lead_popup",
+                "core.context_processors.newsletter_form",
             ],
         },
     },
@@ -94,6 +98,19 @@ MEDIA_URL = "media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "admin:login"
+
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="no-reply@example.com")
+
+# django-q2: the ORM as the broker. No Redis to run for a handful of
+# notification emails a day — see CLAUDE.md's "simpler than Celery" note.
+Q_CLUSTER = {
+    "name": "site_backend",
+    "orm": "default",
+    "workers": 2,
+    "timeout": 60,
+    "retry": 120,
+    "catch_up": False,
+}
 
 # django-ckeditor-5
 CUSTOMCOLOR_PALETTE = []

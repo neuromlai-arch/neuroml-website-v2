@@ -1,18 +1,24 @@
 from django.urls import path
 
-from core.views import stub_detail
-from insights.models import BlogPost, CaseStudy, Handbook, Webinar
+from insights import views
 
 urlpatterns = [
-    path("blog/<slug:slug>/", stub_detail, {"model": BlogPost}, name="blog_detail"),
+    path("blog/", views.blog_list, name="blog_list"),
+    path("blog/<slug:slug>/", views.blog_post_detail, name="blog_detail"),
+    path("case-studies/", views.case_study_list, name="case_study_list"),
+    path("case-studies/<slug:slug>/", views.case_study_detail, name="case_study_detail"),
+    path("handbooks/", views.handbook_list, name="handbook_list"),
+    path("handbooks/<slug:slug>/", views.handbook_detail, name="handbook_detail"),
     path(
-        "case-studies/<slug:slug>/",
-        stub_detail,
-        {"model": CaseStudy},
-        name="case_study_detail",
+        "handbooks/<slug:slug>/download/",
+        views.handbook_gate_submit,
+        name="handbook_gate_submit",
     ),
     path(
-        "handbooks/<slug:slug>/", stub_detail, {"model": Handbook}, name="handbook_detail",
+        "handbooks/download/<str:token>/",
+        views.handbook_download,
+        name="handbook_download",
     ),
-    path("webinars/<slug:slug>/", stub_detail, {"model": Webinar}, name="webinar_detail"),
+    path("webinars/", views.webinar_list, name="webinar_list"),
+    path("webinars/<slug:slug>/", views.webinar_detail, name="webinar_detail"),
 ]

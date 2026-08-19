@@ -1,13 +1,8 @@
 from django.urls import path
 
-from core.views import stub_detail
-from taxonomy.models import Industry
+from taxonomy import views
 
 urlpatterns = [
-    path(
-        "industries/<slug:slug>/",
-        stub_detail,
-        {"model": Industry},
-        name="industry_detail",
-    ),
+    path("industries/", views.industry_list, name="industry_list"),
+    path("industries/<slug:slug>/", views.industry_detail, name="industry_detail"),
 ]

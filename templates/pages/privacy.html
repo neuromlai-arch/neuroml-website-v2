@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="bg-white py-24 lg:py-32">
+  <div class="mx-auto max-w-3xl px-6 lg:px-8">
+    <p class="eyebrow">Legal</p>
+    <h1 class="mt-4 font-serif text-5xl text-ink">Privacy policy</h1>
+    <div class="prose prose-sm mt-10 max-w-none text-ink-secondary">
+      <p>[TODO: privacy policy copy — what data is collected via ContactSubmission, NewsletterSubscriber, and JobApplication, how it's stored, retention, and third-party processors.]</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% comment %}
+Usage: {% include "components/faq_accordion.html" with faqs=faqs %}
+Native <details>/<summary> — keyboard and screen-reader accessible with no JS.
+Emits matching FAQPage JSON-LD.
+{% endcomment %}
+{% if faqs %}
+  <div class="divide-y divide-hairline border-t border-hairline">
+    {% for faq in faqs %}
+      <details class="group py-6">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-ink marker:content-none">
+          {{ faq.question }}
+          <svg class="h-4 w-4 shrink-0 transition-transform duration-300 group-open:rotate-45" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </summary>
+        <div class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-secondary">{{ faq.answer|safe }}</div>
+      </details>
+    {% endfor %}
+  </div>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {% for faq in faqs %}
+      {
+        "@type": "Question",
+        "name": "{{ faq.question|escapejs }}",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "{{ faq.answer|striptags|escapejs }}"
+        }
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+  </script>
+{% endif %}

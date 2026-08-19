@@ -4,7 +4,7 @@ page load isn't paying for the joins."""
 from django.core.cache import cache
 from django.db.models import Prefetch
 
-from marketing.models import Recognition
+from marketing.models import LeadPopup, Recognition
 from pages.models import SiteSettings
 from solutions.models import OrganizationSolution, Product, Service
 from taxonomy.models import Industry, ServiceCluster
@@ -59,3 +59,21 @@ def site_settings(request):
         settings_obj = SiteSettings.load()
         cache.set(SITE_SETTINGS_CACHE_KEY, settings_obj, SITE_SETTINGS_CACHE_TTL)
     return {"site_settings": settings_obj}
+
+
+def lead_popup(request):
+    """Not cached like the other chrome — it drives client-side trigger
+    logic and its own frequency-cap cookie, so it always needs the live row."""
+    from marketing.forms import PopupForm
+
+    popup = LeadPopup.objects.prefetch_related("steps", "badges").first()
+    return {"lead_popup": popup, "popup_form": PopupForm()}
+
+
+def newsletter_form(request):
+    """A blank NewsletterForm for the footer signup, present on every page.
+    Views that handle the POST (marketing.views.newsletter_signup) render
+    their own bound copy instead of using this one."""
+    from marketing.forms import NewsletterForm
+
+    return {"newsletter_form": NewsletterForm()}

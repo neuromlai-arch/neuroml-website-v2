@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+<article class="mx-auto max-w-3xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal">
+    <p class="eyebrow">Article &middot; {{ reading_minutes }} min read</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    <div class="mt-6 flex items-center gap-3 text-sm text-ink-secondary">
+      {% if object.author %}
+        {% if object.author.photo %}
+          {% responsive_img object.author.photo alt=object.author.name css_class="h-10 w-10 rounded-full object-cover grayscale" sizes="40px" %}
+        {% endif %}
+        <span>
+          <span class="font-semibold text-ink">{{ object.author.name }}</span>
+          {% if object.author.role %} &middot; {{ object.author.role }}{% endif %}
+        </span>
+      {% endif %}
+      {% if object.published_at %}<span>&middot; {{ object.published_at|date:"M j, Y" }}</span>{% endif %}
+    </div>
+  </header>
+
+  {% if object.hero_image %}
+    <div class="reveal mt-10">
+      {% responsive_img object.hero_image alt=object.hero_alt css_class="w-full rounded-card object-cover" sizes="768px" %}
+    </div>
+  {% endif %}
+
+  <div class="reveal prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal prose-a:text-ink">
+    {{ object.body|safe }}
+  </div>
+
+  {% if object.tags.all %}
+    <div class="mt-10 flex flex-wrap gap-2 border-t border-hairline pt-6">
+      {% for tag in object.tags.all %}
+        <span class="rounded-full border border-hairline px-3 py-1 text-xs text-ink-secondary">{{ tag.name }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</article>
+
+{% if related_posts %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <h2 class="font-serif text-3xl text-ink">More from Insights</h2>
+      <div class="mt-10 grid gap-6 md:grid-cols-3">
+        {% for post in related_posts %}
+          <a href="{{ post.get_absolute_url }}" class="card card-hover flex flex-col overflow-hidden">
+            {% if post.hero_image %}
+              {% responsive_img post.hero_image alt=post.hero_alt css_class="h-36 w-full object-cover" sizes="33vw" %}
+            {% endif %}
+            <div class="p-5">
+              <p class="text-sm font-semibold leading-snug text-ink">{{ post.title }}</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ object.title|escapejs }}",
+  "description": "{{ object.excerpt|escapejs }}",
+  {% if object.hero_image %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ object.hero_image.url }}",{% endif %}
+  "datePublished": "{{ object.published_at|date:'c' }}",
+  "dateModified": "{{ object.updated_at|date:'c' }}"
+  {% if object.author %},"author": {"@type": "Person", "name": "{{ object.author.name|escapejs }}"}{% endif %}
+}
+</script>
+{% endblock %}

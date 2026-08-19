@@ -1,0 +1,27 @@
+{% comment %}
+Usage: {% include "components/pagination.html" with page_obj=page_obj querystring=request.GET.urlencode %}
+Preserves existing filter querystring params across pages.
+{% endcomment %}
+{% if page_obj.has_other_pages %}
+  <nav aria-label="Pagination" class="mt-14 flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+         {% if htmx_target %}hx-get="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+         hx-target="{{ htmx_target }}" hx-swap="innerHTML" hx-push-url="true"{% endif %}
+         class="rounded-full border border-hairline px-4 py-2 text-sm font-semibold text-ink-body hover:border-ink hover:text-ink">
+        Previous
+      </a>
+    {% endif %}
+    <span class="px-3 text-sm text-ink-secondary">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+         {% if htmx_target %}hx-get="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+         hx-target="{{ htmx_target }}" hx-swap="innerHTML" hx-push-url="true"{% endif %}
+         class="rounded-full border border-hairline px-4 py-2 text-sm font-semibold text-ink-body hover:border-ink hover:text-ink">
+        Next
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}

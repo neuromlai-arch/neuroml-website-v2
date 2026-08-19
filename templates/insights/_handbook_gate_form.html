@@ -1,0 +1,47 @@
+{% comment %}Wrapping element provides id="handbook-gate-form" and includes this. {% endcomment %}
+<form method="post" action="{% url 'handbook_gate_submit' handbook.slug %}"
+      hx-post="{% url 'handbook_gate_submit' handbook.slug %}" hx-target="#handbook-gate-form" hx-swap="innerHTML"
+      class="grid gap-4">
+  {% csrf_token %}
+  <div class="honeypot-field" aria-hidden="true">
+    <label for="id_website">Website</label>
+    {{ form.website }}
+  </div>
+  {% if rate_limited %}
+    <div class="form-error" role="alert"><span>Too many attempts — please try again shortly.</span></div>
+  {% endif %}
+  {% for error in form.non_field_errors %}
+    <div class="form-error" role="alert"><span>{{ error }}</span></div>
+  {% endfor %}
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="{{ form.first_name.id_for_label }}" class="mb-1.5 block text-xs font-semibold text-ink-secondary">First name</label>
+      {{ form.first_name }}
+      {% include "components/_field_error.html" with field=form.first_name %}
+    </div>
+    <div>
+      <label for="{{ form.last_name.id_for_label }}" class="mb-1.5 block text-xs font-semibold text-ink-secondary">Last name</label>
+      {{ form.last_name }}
+    </div>
+  </div>
+  <div>
+    <label for="{{ form.email.id_for_label }}" class="mb-1.5 block text-xs font-semibold text-ink-secondary">Work email</label>
+    {{ form.email }}
+    {% include "components/_field_error.html" with field=form.email %}
+  </div>
+  <div>
+    <label for="{{ form.company.id_for_label }}" class="mb-1.5 block text-xs font-semibold text-ink-secondary">Company</label>
+    {{ form.company }}
+  </div>
+  {{ form.utm_source }}{{ form.utm_medium }}{{ form.utm_campaign }}
+
+  <button type="submit" class="btn-pill group justify-center">
+    <span>Get the download link</span>
+    <span class="btn-pill__icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </button>
+</form>

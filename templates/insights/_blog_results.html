@@ -1,0 +1,21 @@
+{% load imaging %}
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {% for post in page_obj %}
+    <a href="{{ post.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
+      {% if post.hero_image %}
+        {% responsive_img post.hero_image alt=post.hero_alt css_class="h-44 w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
+      {% endif %}
+      <div class="flex flex-1 flex-col p-6">
+        <p class="eyebrow">Article{% if post.reading_minutes %} &middot; {{ post.reading_minutes }} min read{% endif %}</p>
+        <p class="mt-3 text-lg font-semibold leading-snug text-ink">{{ post.title }}</p>
+        <p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ post.excerpt|truncatewords:22 }}</p>
+        {% if post.author %}
+          <p class="mt-6 border-t border-hairline pt-4 text-xs text-ink-secondary">{{ post.author.name }}</p>
+        {% endif %}
+      </div>
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No posts match those filters." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

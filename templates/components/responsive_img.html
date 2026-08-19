@@ -1,0 +1,8 @@
+{% if src %}<img
+  src="{{ src }}"
+  {% if srcset %}srcset="{{ srcset }}" sizes="{{ sizes }}"{% endif %}
+  alt="{{ alt }}"
+  {% if width %}width="{{ width }}" height="{{ height }}"{% endif %}
+  loading="{{ loading }}"
+  class="{{ css_class }}"
+>{% endif %}

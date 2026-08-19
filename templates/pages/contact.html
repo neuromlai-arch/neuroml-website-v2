@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="bg-white bg-grid-surface py-24 lg:py-32">
+  <div class="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:px-8">
+    <div>
+      <p class="eyebrow">Contact</p>
+      <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">Let's talk</h1>
+      <p class="mt-6 max-w-md text-lg leading-relaxed text-ink-secondary">[TODO: contact-page intro copy]</p>
+
+      {% if offices %}
+        <div class="mt-12 space-y-8 border-t border-hairline pt-8">
+          {% for office in offices %}
+            <div>
+              <p class="text-sm font-semibold text-ink">
+                {{ office.city }}{% if office.country %}, {{ office.country }}{% endif %}
+                {% if office.is_headquarters %}<span class="eyebrow ml-2">HQ</span>{% endif %}
+              </p>
+              <p class="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink-secondary">{{ office.address }}</p>
+              {% if office.phone %}<p class="mt-1 text-sm text-ink-secondary">{{ office.phone }}</p>{% endif %}
+              {% if office.email %}<p class="text-sm text-ink-secondary">{{ office.email }}</p>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card p-8" id="contact-form">
+      {% include "components/_contact_form_fields.html" with form=form dark=False %}
+    </div>
+  </div>
+</section>
+{% endblock %}

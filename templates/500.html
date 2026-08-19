@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Something went wrong</title>
+  {# Standalone on purpose: a 500 can be triggered by a context-processor or DB
+     failure, so this page must not depend on either. #}
+  <link rel="stylesheet" href="{% static 'css/dist/main.css' %}">
+</head>
+<body class="bg-white font-sans text-ink-body antialiased">
+  <section class="flex min-h-screen items-center justify-center bg-white bg-grid-surface">
+    <div class="mx-auto max-w-xl px-6 py-24 text-center">
+      <p class="eyebrow">500</p>
+      <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">Something went wrong</h1>
+      <p class="mt-6 text-lg leading-relaxed text-ink-secondary">
+        We've hit a snag on our end. Try again in a moment.
+      </p>
+      <div class="mt-10 flex justify-center">
+        <a href="/" class="btn-pill group">
+          <span>Back to home</span>
+          <span class="btn-pill__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

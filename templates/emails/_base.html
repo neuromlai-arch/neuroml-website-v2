@@ -1,0 +1,17 @@
+{% comment %}
+Inline styles only — email clients strip <style> blocks and external CSS
+unreliably. Keep to the same monochrome tokens as the site by hand.
+{% endcomment %}
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:32px 16px;background:#F4F4F4;font-family:Helvetica,Arial,sans-serif;color:#1A1A1A;">
+  <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;overflow:hidden;">
+    <tr>
+      <td style="padding:32px;">
+        <p style="margin:0 0 24px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#6B6B6B;">{% block eyebrow %}Notification{% endblock %}</p>
+        {% block body %}{% endblock %}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article class="mx-auto max-w-4xl px-6 py-24 lg:px-8 lg:py-32">
+  <header class="reveal">
+    <p class="eyebrow">{{ object.cluster.name }}</p>
+    <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.title }}</h1>
+    {% if object.tagline %}
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-secondary">{{ object.tagline }}</p>
+    {% endif %}
+  </header>
+
+  {% if object.hero_image %}
+    <div class="reveal mt-10">
+      {% responsive_img object.hero_image alt="" css_class="w-full rounded-card object-cover" sizes="896px" %}
+    </div>
+  {% endif %}
+
+  {% if object.body %}
+    <div class="reveal prose prose-neutral mt-10 max-w-none text-ink-body prose-headings:font-serif prose-headings:font-normal prose-a:text-ink">
+      {{ object.body|safe }}
+    </div>
+  {% endif %}
+</article>
+
+{% if children %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <h2 class="font-serif text-3xl text-ink">Areas within {{ object.title }}</h2>
+      <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {% for child in children %}
+          <a href="{{ child.get_absolute_url }}" class="card card-hover p-6">
+            <p class="text-base font-semibold text-ink">{{ child.title }}</p>
+            {% if child.tagline %}<p class="mt-2 text-sm text-ink-secondary">{{ child.tagline }}</p>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{% if technologies %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <p class="eyebrow">Tech we use</p>
+      <h2 class="mt-4 font-serif text-3xl text-ink">Built with</h2>
+      <div class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+        {% for tech in technologies %}
+          <a href="{{ tech.get_absolute_url }}" class="card card-hover flex flex-col items-center justify-center gap-3 p-6 text-center">
+            {% if tech.logo %}{% responsive_img tech.logo alt=tech.name css_class="logo-mono h-8 w-auto" %}{% endif %}
+            <p class="text-xs font-semibold text-ink">{{ tech.name }}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{% if faqs %}
+  <section class="border-t border-hairline bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-3xl px-6 lg:px-8">
+      <p class="eyebrow">FAQ</p>
+      <h2 class="mt-4 font-serif text-3xl text-ink">Questions, answered</h2>
+      <div class="mt-10">
+        {% include "components/faq_accordion.html" with faqs=faqs %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+<section class="border-t border-hairline bg-band py-20 text-center text-white">
+  <div class="mx-auto max-w-2xl px-6 lg:px-8">
+    <h2 class="font-serif text-3xl text-white">Ready to talk about {{ object.title|lower }}?</h2>
+    <div class="mt-8 flex justify-center">
+      {% include "components/pill_cta.html" with label="Talk to an expert" url="/contact/#contact-form" variant="dark" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

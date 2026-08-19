@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load imaging %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<article>
+  <header class="border-b border-hairline bg-white py-20 lg:py-28">
+    <div class="mx-auto max-w-4xl px-6 text-center lg:px-8">
+      <p class="eyebrow">Industry</p>
+      <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.name }}</h1>
+      {% if object.blurb %}
+        <p class="mt-4 text-lg leading-relaxed text-ink-secondary">{{ object.blurb }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+    <h2 class="font-serif text-3xl text-ink">Use cases</h2>
+    <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {% for use_case in use_cases %}
+        <a href="{{ use_case.cta_url|default:use_case.get_absolute_url }}" class="reveal card card-hover flex flex-col p-6">
+          <p class="text-base font-semibold text-ink">{{ use_case.title }}</p>
+          <p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ use_case.summary }}</p>
+          <span class="mt-6 text-sm font-semibold text-ink">{{ use_case.cta_label }} &rarr;</span>
+        </a>
+      {% empty %}
+        {% include "components/empty_state.html" with message="[TODO: publish use cases for this industry]" %}
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if case_studies %}
+    <section class="border-t border-hairline bg-white py-20 lg:py-28">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <h2 class="font-serif text-3xl text-ink">Case studies</h2>
+        <div class="mt-10 grid gap-6 lg:grid-cols-3">
+          {% for case_study in case_studies %}
+            <a href="{{ case_study.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
+              {% if case_study.hero_image %}
+                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-40 w-full object-cover" %}
+              {% endif %}
+              <div class="flex flex-1 flex-col p-6">
+                <p class="text-base font-semibold text-ink">{{ case_study.title }}</p>
+                <p class="mt-2 text-sm text-ink-secondary">{{ case_study.excerpt|truncatewords:20 }}</p>
+                <p class="mt-auto pt-6 text-sm font-semibold text-ink">{{ case_study.display_client }}</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if products %}
+    <section class="border-t border-hairline bg-white py-20 lg:py-28">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <h2 class="font-serif text-3xl text-ink">Products for {{ object.name }}</h2>
+        <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {% for product in products %}
+            <a href="{{ product.get_absolute_url }}" class="reveal card card-hover p-6">
+              <p class="text-base font-semibold text-ink">{{ product.title }}</p>
+              <p class="mt-2 text-sm text-ink-secondary">{{ product.tagline }}</p>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</article>
+{% endblock %}

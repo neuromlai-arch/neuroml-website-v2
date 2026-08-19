@@ -1,0 +1,22 @@
+{% comment %}Wrapping element provides id="newsletter-form" and includes this. {% endcomment %}
+<form method="post" action="{% url 'newsletter_signup' %}"
+      hx-post="{% url 'newsletter_signup' %}" hx-target="#newsletter-form" hx-swap="innerHTML"
+      class="flex gap-2">
+  {% csrf_token %}
+  <div class="honeypot-field" aria-hidden="true">
+    <label for="id_website">Website</label>
+    {{ form.website }}
+  </div>
+  <label for="{{ form.email.id_for_label }}" class="sr-only">Email address</label>
+  {{ form.email }}
+  <button type="submit" class="shrink-0 rounded-full border border-white bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-band hover:text-white">
+    Subscribe
+  </button>
+</form>
+{% if rate_limited %}
+  <p class="mt-2 text-xs text-white/60">Too many attempts — please try again shortly.</p>
+{% endif %}
+{% for error in form.non_field_errors %}
+  <p class="mt-2 text-xs text-white/60">{{ error }}</p>
+{% endfor %}
+{% include "components/_field_error.html" with field=form.email %}

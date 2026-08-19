@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
+
+<section class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+  <p class="eyebrow">Careers</p>
+  <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">Open roles</h1>
+  <p class="mt-4 max-w-2xl text-lg text-ink-secondary">[TODO: careers intro copy]</p>
+
+  <form
+    class="mt-12 flex flex-wrap gap-3"
+    hx-get="{% url 'job_posting_list' %}"
+    hx-target="#job-results"
+    hx-swap="outerHTML"
+    hx-push-url="true"
+    hx-trigger="change"
+  >
+    <label class="sr-only" for="filter-department">Department</label>
+    <select id="filter-department" name="department"
+            class="rounded-full border border-hairline bg-white px-4 py-2 text-sm text-ink-body">
+      <option value="">All departments</option>
+      {% for dept in departments %}
+        <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="sr-only" for="filter-work-mode">Work mode</label>
+    <select id="filter-work-mode" name="work_mode"
+            class="rounded-full border border-hairline bg-white px-4 py-2 text-sm text-ink-body">
+      <option value="">Any work mode</option>
+      {% for value, label in work_modes %}
+        <option value="{{ value }}" {% if value == selected_work_mode %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="sr-only" for="filter-employment-type">Employment type</label>
+    <select id="filter-employment-type" name="employment_type"
+            class="rounded-full border border-hairline bg-white px-4 py-2 text-sm text-ink-body">
+      <option value="">Any employment type</option>
+      {% for value, label in employment_types %}
+        <option value="{{ value }}" {% if value == selected_employment_type %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <div class="mt-10">
+    {% include "careers/_job_posting_results.html" %}
+  </div>
+</section>
+{% endblock %}

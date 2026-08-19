@@ -1,0 +1,19 @@
+{% load imaging %}
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {% for service in page_obj %}
+    <a href="{{ service.get_absolute_url }}" class="card card-hover flex flex-col p-8">
+      {% if service.icon %}
+        {% responsive_img service.icon alt="" css_class="h-10 w-10 object-contain" %}
+      {% endif %}
+      <p class="mt-4 text-lg font-semibold text-ink">{{ service.title }}</p>
+      <p class="mt-1 text-xs text-ink-secondary">{{ service.cluster.name }}</p>
+      {% if service.tagline %}
+        <p class="mt-3 flex-1 text-sm leading-relaxed text-ink-secondary">{{ service.tagline }}</p>
+      {% endif %}
+      <span class="mt-6 text-sm font-semibold text-ink">Learn more &rarr;</span>
+    </a>
+  {% empty %}
+    {% include "components/empty_state.html" with message="No services match this filter yet." %}
+  {% endfor %}
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}
