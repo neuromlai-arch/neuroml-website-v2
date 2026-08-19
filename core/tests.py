@@ -1,5 +1,9 @@
+import uuid
 from datetime import timedelta
+from io import StringIO
 
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -110,3 +114,57 @@ class PublishableLiveManagerTests(TestCase):
         response = self.client.get(reverse("blog_list"))
         self.assertContains(response, "Published post")
         self.assertNotContains(response, "Unpublished post")
+
+
+class WorkerHealthTests(TestCase):
+    """core/worker_health.py — the fix for the queue worker never running
+    in production (silent lead loss via django-q2). See DEPLOY.md."""
+
+    def _record_heartbeat(self, *, minutes_ago=0, func="core.tasks.heartbeat"):
+        from django_q.models import Success
+
+        stopped = timezone.now() - timedelta(minutes=minutes_ago)
+        return Success.objects.create(
+            id=uuid.uuid4().hex, name="heartbeat", func=func,
+            started=stopped, stopped=stopped, success=True, attempt_count=1,
+        )
+
+    def test_heartbeat_schedule_created_by_migration(self):
+        from django_q.models import Schedule
+
+        self.assertTrue(
+            Schedule.objects.filter(
+                func="core.tasks.heartbeat", schedule_type="I", minutes=5,
+            ).exists()
+        )
+
+    def test_worker_view_503_when_no_heartbeat_ever_recorded(self):
+        response = self.client.get(reverse("worker_health"))
+        self.assertEqual(response.status_code, 503)
+
+    def test_worker_view_200_when_heartbeat_recent(self):
+        self._record_heartbeat(minutes_ago=1)
+        response = self.client.get(reverse("worker_health"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_worker_view_503_when_heartbeat_stale(self):
+        self._record_heartbeat(minutes_ago=30)
+        response = self.client.get(reverse("worker_health"))
+        self.assertEqual(response.status_code, 503)
+
+    def test_worker_view_ignores_success_rows_for_other_tasks(self):
+        # A busy queue on unrelated tasks must not mask a dead heartbeat.
+        self._record_heartbeat(minutes_ago=30, func="core.tasks.heartbeat")
+        self._record_heartbeat(minutes_ago=0, func="core.notifications._deliver")
+        response = self.client.get(reverse("worker_health"))
+        self.assertEqual(response.status_code, 503)
+
+    def test_check_worker_health_command_errors_when_unhealthy(self):
+        with self.assertRaises(CommandError):
+            call_command("check_worker_health")
+
+    def test_check_worker_health_command_succeeds_when_healthy(self):
+        self._record_heartbeat(minutes_ago=1)
+        out = StringIO()
+        call_command("check_worker_health", stdout=out)
+        self.assertIn("healthy", out.getvalue())

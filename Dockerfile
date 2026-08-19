@@ -59,4 +59,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/healthz/ || exit 1
 
+# This is the web process only. A second process — `python manage.py
+# qcluster` — must run off this same image for queued notification/
+# newsletter emails to ever send. See Procfile and DEPLOY.md's CRITICAL
+# section; check it's alive via `check_worker_health` or GET /healthz/worker/.
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

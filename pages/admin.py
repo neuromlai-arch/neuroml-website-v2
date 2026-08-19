@@ -39,7 +39,11 @@ class SiteSettingsAdmin(ModelAdmin):
             "fields": ["linkedin_url", "twitter_url", "facebook_url",
                        "youtube_url", "instagram_url"],
         }),
-        ("Tracking", {"fields": ["gtm_container_id", "recaptcha_site_key"]}),
+        # recaptcha_site_key is intentionally left off this form — see the
+        # comment on SiteSettings.recaptcha_site_key. Nothing reads it yet,
+        # so showing it here would just invite an editor to fill in a value
+        # that does nothing.
+        ("Tracking", {"fields": ["gtm_container_id"]}),
     ]
 
     def has_add_permission(self, request):

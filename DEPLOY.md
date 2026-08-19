@@ -65,16 +65,61 @@ placeholders are safe.
   match, since `EMAIL_HOST` has no default and would otherwise break the
   Docker build.
 
-## Needs a decision from you (not fixed)
+## CRITICAL — the queue worker must run as its own process
 
-- **`SiteSettings.gtm_container_id` and `.recaptcha_site_key` are dead
-  fields.** They exist on the model and in the admin, but nothing in any
-  template renders a GTM snippet or a reCAPTCHA widget, and no form does
-  server-side reCAPTCHA verification. If analytics/spam-protection are
-  expected at launch, that's real frontend + form work, not a config
-  toggle — flagging rather than building it silently. If they're
-  intentionally unused for now, consider hiding those two admin fields so
-  editors don't fill in values that do nothing.
+**This was the single biggest deploy risk from the readiness audit and is
+now fixed, but only if you actually run the second process.** `Dockerfile`'s
+`CMD` is gunicorn-only. Every notification email (contact/demo/popup,
+handbook-gate, job application) and the newsletter confirmation email is
+queued into django-q2's ORM broker (`core/notifications.py`), not sent
+inline. If nothing is running `python manage.py qcluster`, those tasks sit
+in the `django_q` broker table forever: the form still validates, still
+saves the `ContactSubmission`, still shows the success state to the visitor
+— and the lead just never reaches anyone. Nothing errors, nothing shows up
+in logs, because from the web process's point of view the request succeeded.
+
+**Fix:** run the image twice, with two different commands — see `Procfile`
+at the repo root:
+
+```
+web:    gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+worker: python manage.py qcluster
+```
+
+Most PaaS hosts (Render, Railway, Heroku-style buildpacks, Fly with a
+`[processes]` block) read a `Procfile` directly and run each line as its own
+process/container off the same build — no second Dockerfile needed. If your
+host doesn't, translate the `worker:` line into whatever it calls a second
+process type/service pointed at the same image.
+
+**Verify it's actually running** — don't just trust that it's configured:
+
+- `python manage.py check_worker_health` — exits non-zero with a clear
+  message if no worker has checked in recently. Point a post-deploy CI step
+  or a cron job at this.
+- `GET /healthz/worker/` — 200 when healthy, 503 when stale/missing. Point
+  an external uptime check at this **in addition to** `/healthz/` (the
+  latter is gunicorn's own liveness probe via `Dockerfile`'s `HEALTHCHECK`
+  and says nothing about the worker — a dead worker must not fail the web
+  container's health check, since the web process itself is fine).
+
+Both read `core/worker_health.py`, which looks for a recent `Success` row
+for `core.tasks.heartbeat` — scheduled to run every 5 minutes by the
+`core/migrations/0003_create_qcluster_heartbeat_schedule.py` data migration
+(a django-q2 `Schedule` row, not a schema change of ours). A worker that's
+been down for more than ~15 minutes reports unhealthy.
+
+## Resolved during this pass (previously flagged as needing a decision)
+
+- **GTM.** `SiteSettings.gtm_container_id` now renders the standard head
+  script + `<body>` `<noscript>` iframe in `templates/base.html`, only when
+  the field is set. Fill it in via `/admin/` when you have a container ID —
+  nothing else to configure.
+- **reCAPTCHA.** Still not implemented — no form does server-side
+  verification. Rather than build that silently, `recaptcha_site_key` was
+  removed from `SiteSettingsAdmin`'s fieldsets (model field kept, commented
+  `# Reserved`) so editors can no longer fill in a value that does nothing.
+  Wire up real verification before re-exposing it.
 
 ## Must exist externally before first deploy
 
@@ -89,12 +134,11 @@ placeholders are safe.
   of it (`SECURE_SSL_REDIRECT`/HSTS are already on in `prod.py` and assume
   a proxy/load balancer terminates HTTPS and sets
   `X-Forwarded-Proto: https`, per `SECURE_PROXY_SSL_HEADER`).
-- **A worker process for `manage.py qcluster`.** Every notification and
-  confirmation email is queued via django-q2's ORM broker (`core/notifications.py`)
-  and only actually sent when a `qcluster` process is running — the web
-  process alone never sends mail. This needs its own long-running
-  process/container in prod (not covered by `Dockerfile`'s `CMD`, which
-  only runs gunicorn).
+- **REQUIRED: a worker process running `manage.py qcluster`**, deployed
+  alongside (not instead of) the web process — see the CRITICAL section
+  above. This is not optional infrastructure; skipping it means every
+  contact/demo/handbook/job-application/newsletter email silently never
+  sends.
 - **301 redirect data** — `Redirect` rows for every old-site URL, loaded via
   `python manage.py import_redirects <csv>` before DNS cutover, per
   CLAUDE.md's SEO section. Not itself infrastructure, but blocking for

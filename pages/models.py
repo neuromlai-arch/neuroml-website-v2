@@ -81,6 +81,10 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     youtube_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     gtm_container_id = models.CharField(max_length=30, blank=True)
+    # Reserved — no form does server-side reCAPTCHA verification yet, and
+    # this field is hidden from SiteSettingsAdmin so an editor can't fill it
+    # in believing it does something. Wire up verification before exposing
+    # it again.
     recaptcha_site_key = models.CharField(max_length=100, blank=True)
 
     class Meta:

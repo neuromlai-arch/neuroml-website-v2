@@ -13,6 +13,13 @@
   {% endif %}
   <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}">
   <script type="application/ld+json">{{ organization_json_ld }}</script>
+  {% if site_settings.gtm_container_id %}
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ site_settings.gtm_container_id }}');</script>
+  {% endif %}
   {% block extra_head %}{% endblock %}
 </head>
 <body
@@ -21,6 +28,10 @@
   x-init="scrolled = window.scrollY > 40"
   @scroll.window="scrolled = window.scrollY > 40"
 >
+  {% if site_settings.gtm_container_id %}
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ site_settings.gtm_container_id }}"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  {% endif %}
   <a href="#main-content"
      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]
             focus:rounded-full focus:border focus:border-ink focus:bg-ink focus:px-4 focus:py-2 focus:text-sm
