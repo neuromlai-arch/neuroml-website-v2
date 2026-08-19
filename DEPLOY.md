@@ -1,0 +1,103 @@
+# Deploy checklist
+
+This is a launch-readiness reference, not a deploy trigger — nothing in this
+repo has been deployed. Read this before the first real deploy.
+
+## Environment variables
+
+Everything is read via `django-environ` from a real `.env` file or the
+process environment — see `.env.example` for the canonical list. `Required`
+below means "Django raises `ImproperlyConfigured` and refuses to start
+without it"; `Optional` means there's a working default.
+
+| Variable | Required? | Read in | What breaks without it |
+|---|---|---|---|
+| `DJANGO_SETTINGS_MODULE` | Required (no default in `manage.py`/WSGI) | everywhere | Django can't boot at all. Must be `config.settings.prod` for any real deploy — `config.settings.dev` is local-only (`DEBUG=True`, console email, filesystem media). |
+| `DJANGO_SECRET_KEY` | Required | `base.py` | Django refuses to start. Never reuse the dev value in prod — sessions, password resets, and the signed preview/download/newsletter-confirm tokens all derive from it. |
+| `DJANGO_DEBUG` | Optional (default `False`) | `base.py` | Leaving this unset is the safe default. Setting it `True` in prod is a real security hole (stack traces with source and env vars leak to any visitor) — `check --deploy` warns (W018) if it's ever `True` outside dev. |
+| `DJANGO_ALLOWED_HOSTS` | Optional (default `[]`) | `base.py` | With `DEBUG=False` (i.e. in prod) an empty list means **every request 400s** — `CommonMiddleware` can't validate `Host`. Must be set to the real domain(s) before prod ever serves traffic. |
+| `DATABASE_URL` | Required | `base.py` | No database connection — nothing works. Format: `postgres://user:pass@host:port/dbname`. |
+| `DJANGO_DEFAULT_FROM_EMAIL` | Optional (default `no-reply@example.com`) | `base.py` | Every queued notification/confirmation email goes out from the placeholder address instead of a real one — not a crash, just wrong sender. |
+| `EMAIL_HOST` | **Required in prod** (no default) | `prod.py` | `config.settings.prod` fails to import at all — this blocks `collectstatic`, migrations, `runserver`, everything, not just email. The Dockerfile's build-time `collectstatic` step supplies a `build` placeholder for exactly this reason; the real deploy environment needs the actual SMTP relay hostname. |
+| `EMAIL_PORT` | Optional (default `587`) | `prod.py` | Wrong port for your relay → SMTP connection failures, so queued emails (contact/demo/popup notifications, handbook-gate, job applications, newsletter confirmation) silently pile up as failed `django_q` tasks instead of sending. |
+| `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Optional (default `""`) | `prod.py` | Most relays require auth — leaving these blank means every send attempt fails at the SMTP `AUTH` step. |
+| `EMAIL_USE_TLS` | Optional (default `True`) | `prod.py` | Only turn this off if your relay genuinely doesn't support it; most do. |
+| `AWS_STORAGE_BUCKET_NAME` | **Required in prod** (no default) | `prod.py` | `config.settings.prod` fails to import — same "nothing works" failure mode as `EMAIL_HOST` above. |
+| `AWS_S3_ENDPOINT_URL` | **Required in prod** | `prod.py` | Same — import-time failure. Point this at your S3-compatible provider's endpoint (AWS S3 itself, R2, Spaces, etc). |
+| `AWS_S3_REGION_NAME` | **Required in prod** | `prod.py` | Same — import-time failure. |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | **Required in prod** | `prod.py` | Same — import-time failure. Without valid credentials specifically (as opposed to just being unset), every media upload/read in the admin and every image render on the public site fails once the app *does* start. |
+| `DJANGO_SUPERUSER_USERNAME` / `_EMAIL` / `_PASSWORD` | Optional — only read by `manage.py bootstrap_superuser` | `bootstrap_superuser.py` | That one management command errors out (`CommandError`) if any are missing when you run it. Nothing else depends on them; there's no other way to get the first admin login without running this command or `createsuperuser` manually. |
+
+Nothing else in the codebase reads an environment variable — `GTM
+container ID` and `reCAPTCHA site key` are **not** env vars, see the gap
+called out below.
+
+## `DEBUG=False` + `collectstatic` + whitenoise
+
+Verified locally against `config.settings.prod` with dummy AWS/SMTP values
+(media/email backends aren't touched by `collectstatic`, so this doesn't
+require a real S3 bucket or SMTP relay to confirm):
+
+```
+python manage.py check --deploy   # clean, once DJANGO_SECRET_KEY is a real long random value
+python manage.py collectstatic --noinput   # clean (two harmless "found another file" notices from
+                                            # django-unfold/admin overlapping static paths — not an error)
+```
+
+and a request against the collected static tree with `DEBUG=False` and
+`whitenoise.storage.CompressedManifestStaticFilesStorage` renders the
+homepage and a list page at 200 with `{% static %}` resolving through the
+manifest correctly.
+
+`Dockerfile` already runs `collectstatic` at build time with placeholder
+`AWS_*`/`EMAIL_HOST` values (added here — see the fix note below) — that
+step only touches the filesystem, never a real bucket or relay, so the
+placeholders are safe.
+
+## Fixed during this pass (relevant to deploy)
+
+- `EMAIL_HOST`/`EMAIL_PORT`/`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`/
+  `EMAIL_USE_TLS` didn't exist as settings at all — `prod.py` set
+  `EMAIL_BACKEND` to the SMTP backend but never configured *where* to send,
+  which means it would have silently tried `localhost:25` with no auth in
+  the first real deploy. Added them (see table above) and updated
+  `Dockerfile`'s build-time `collectstatic` step and `.env.example` to
+  match, since `EMAIL_HOST` has no default and would otherwise break the
+  Docker build.
+
+## Needs a decision from you (not fixed)
+
+- **`SiteSettings.gtm_container_id` and `.recaptcha_site_key` are dead
+  fields.** They exist on the model and in the admin, but nothing in any
+  template renders a GTM snippet or a reCAPTCHA widget, and no form does
+  server-side reCAPTCHA verification. If analytics/spam-protection are
+  expected at launch, that's real frontend + form work, not a config
+  toggle — flagging rather than building it silently. If they're
+  intentionally unused for now, consider hiding those two admin fields so
+  editors don't fill in values that do nothing.
+
+## Must exist externally before first deploy
+
+- **PostgreSQL** reachable at `DATABASE_URL`. `docker-compose.yml` only
+  covers local dev (a single `db` service, no prod config).
+- **S3-compatible bucket** for media (`AWS_STORAGE_BUCKET_NAME` +
+  endpoint/region/credentials) — every uploaded image/PDF/resume lives
+  here in prod, not on local disk.
+- **SMTP relay** reachable at `EMAIL_HOST` with working credentials — see
+  above.
+- **Domain + DNS**, entered into `DJANGO_ALLOWED_HOSTS`, with TLS in front
+  of it (`SECURE_SSL_REDIRECT`/HSTS are already on in `prod.py` and assume
+  a proxy/load balancer terminates HTTPS and sets
+  `X-Forwarded-Proto: https`, per `SECURE_PROXY_SSL_HEADER`).
+- **A worker process for `manage.py qcluster`.** Every notification and
+  confirmation email is queued via django-q2's ORM broker (`core/notifications.py`)
+  and only actually sent when a `qcluster` process is running — the web
+  process alone never sends mail. This needs its own long-running
+  process/container in prod (not covered by `Dockerfile`'s `CMD`, which
+  only runs gunicorn).
+- **301 redirect data** — `Redirect` rows for every old-site URL, loaded via
+  `python manage.py import_redirects <csv>` before DNS cutover, per
+  CLAUDE.md's SEO section. Not itself infrastructure, but blocking for
+  launch and easy to forget.
+- If GTM/reCAPTCHA get wired up per the decision above: a **GTM container**
+  and **reCAPTCHA site/secret key pair**.

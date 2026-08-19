@@ -47,6 +47,7 @@ RUN DJANGO_SECRET_KEY=build-time-placeholder \
     AWS_S3_REGION_NAME=build \
     AWS_ACCESS_KEY_ID=build \
     AWS_SECRET_ACCESS_KEY=build \
+    EMAIL_HOST=build \
     python manage.py collectstatic --noinput
 
 RUN mkdir -p /app/media && chown -R app:app /app
