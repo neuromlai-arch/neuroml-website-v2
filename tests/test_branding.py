@@ -89,4 +89,4 @@ class BrandAssetsTests(TestCase):
         html = response.content.decode()
         # brand_logo.html always renders an <a href="/" aria-label="..."> —
         # the header, footer, and popup panel each include it at least once.
-        self.assertGreaterEqual(html.count('aria-label="[Placeholder] AI Consultancy"'), 3)
+        self.assertGreaterEqual(html.count('aria-label="NeuroML.ai"'), 3)

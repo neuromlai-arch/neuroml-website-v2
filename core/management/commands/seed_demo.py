@@ -711,7 +711,7 @@ class Command(BaseCommand):
     def _seed_site_settings(self):
         settings_obj = SiteSettings.load()
         if not settings_obj.site_name:
-            settings_obj.site_name = f"{PLACEHOLDER} AI Consultancy"
+            settings_obj.site_name = "NeuroML.ai"
             settings_obj.email = "hello@example.com"
             settings_obj.phone = "+1 555 0100"
             settings_obj.whatsapp_number = "+15550100"
@@ -725,13 +725,21 @@ class Command(BaseCommand):
     def _seed_homepage(self):
         home = HomePage.load()
         if not home.hero_heading:
-            home.hero_heading = (
-                "We build the AI systems\nyour team actually trusts\nto run production."
+            # Two-tone heading: two_tone_heading.html splits on newlines and
+            # mutes line 2 — that's the "grey half" of the treatment.
+            home.hero_heading = "AI that ships.\nNot AI that demos."
+            home.hero_subheading = (
+                "Most AI pilots never reach production. We build the ones "
+                "that do — agents, retrieval systems, and vision models "
+                "running against real users and real data."
             )
-            home.hero_subheading = f"{PLACEHOLDER} Subheading copy for the hero section."
-            home.hero_cta_label = "Talk to an expert"
+            home.hero_cta_label = "Tell us what's stuck"
             home.hero_cta_url = "/contact/"
+            home.expertise_heading = "Three things, done properly"
             home.expertise_intro = f"{PLACEHOLDER} Intro copy for the expertise section."
+            home.use_cases_heading = "Where this actually gets used"
+            home.case_studies_heading = "Work that made it to production"
+            home.insights_heading = "Notes from the build"
             set_placeholder(home, "hero_image", 1200, 900, "Hero", slug="home-hero")
             home.save()
 
