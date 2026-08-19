@@ -1,8 +1,20 @@
 /* Lead popup trigger logic: delay / scroll / exit-intent / delay-or-exit,
    a frequency-cap cookie on dismissal, and a longer-lived cookie once the
-   form is submitted (both set from server-driven day counts). */
-function leadPopup(config) {
-  return {
+   form is submitted (both set from server-driven day counts).
+
+   Registered via Alpine.data() on the alpine:init event rather than as a
+   bare global function: Alpine's CDN build calls Alpine.start() as soon as
+   its own <script> tag finishes executing, which happens *before* this
+   file's deferred <script> tag runs. A plain `function leadPopup(){}`
+   loses that race — Alpine evaluates `x-data="leadPopup(...)"` while the
+   function doesn't exist yet, throws, and (since x-cloak has already been
+   stripped by then) the popup renders permanently visible on every page
+   load instead of staying hidden until its trigger fires. Alpine.data()
+   registration happens on alpine:init, which Alpine fires immediately
+   before it scans the DOM, so it's always ready in time regardless of
+   script order. */
+document.addEventListener("alpine:init", () => {
+  Alpine.data("leadPopup", (config) => ({
     open: false,
     config,
     init() {
@@ -54,5 +66,5 @@ function leadPopup(config) {
       const expires = new Date(Date.now() + days * 864e5).toUTCString();
       document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
     },
-  };
-}
+  }));
+});

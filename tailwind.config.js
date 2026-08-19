@@ -16,7 +16,7 @@ module.exports = {
         ink: "#0B0B0B",
         "ink-body": "#1A1A1A",
         "ink-secondary": "#6B6B6B",
-        "ink-muted": "#9B9B9B",
+        "ink-muted": "#757575",
         hairline: "#E5E5E5",
         band: "#0B0B0B",
         grid: "#F4F4F4",
