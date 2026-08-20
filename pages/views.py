@@ -18,7 +18,7 @@ from core.utm import utm_initial
 from insights.models import BlogPost, CaseStudy, Handbook
 from marketing.forms import ContactForm
 from marketing.models import (
-    ClientLogo, ComparisonTable, EngagementModel, FAQ, Partner, ProcessStep,
+    ClientLogo, ComparisonTable, EngagementModel, FAQ, ProcessStep,
     Testimonial,
 )
 from pages.models import HomePage, Office
@@ -28,6 +28,8 @@ from taxonomy.models import Industry, ServiceCluster
 
 PREVIEW_SALT = "pages.preview"
 PREVIEW_MAX_AGE = 60 * 60 * 24  # 24 hours
+
+IGAMING_INDUSTRY_SLUG = "igaming-sweepstakes"
 
 # The hero card stack — a curated capability overview, not a live Service
 # queryset: six fixed labels chosen for the hero specifically, including
@@ -55,35 +57,76 @@ def _homepage_use_cases():
     ]
 
 
-def _homepage_stats(home_page):
+def _homepage_stats(home_page, case_study_total_count):
     """First three are always derived live — never stored, never stale.
     The fourth has no database source, so it's the one editable field on
     HomePage; omitted entirely (not a placeholder) when blank. See
-    pages/models.py's comment on stat_4_value for why."""
+    pages/models.py's comment on stat_4_value for why.
+
+    `case_study_total_count` is passed in rather than re-queried — home()
+    already needs the same `CaseStudy.objects.live().count()` for the
+    "View all N projects" link, and running it twice on every homepage
+    request for the same number is wasted work.
+
+    Technologies counts the same queryset as the stack grid section
+    (`show_in_stack_grid=True`), not `.live()` — a technology can sit in the
+    grid with its own detail page unpublished, so counting `.live()` here
+    would undercount what the visitor actually sees on the page.
+
+    A stat whose value is 0 is omitted rather than shown — a zero reads as
+    broken, not as "nothing published yet"."""
     stats = [
-        {"value": CaseStudy.objects.live().count(), "label": "Published case studies"},
+        {"value": case_study_total_count, "label": "Published case studies"},
         {
             "value": CaseStudy.objects.live()
-            .filter(industry__slug="igaming-sweepstakes").count(),
+            .filter(industry__slug=IGAMING_INDUSTRY_SLUG).count(),
             "label": "Live iGaming platforms",
         },
-        {"value": Technology.objects.live().count(), "label": "Technologies"},
+        {
+            "value": Technology.objects.filter(show_in_stack_grid=True).count(),
+            "label": "Technologies",
+        },
     ]
     if home_page.stat_4_value:
         stats.append({"value": home_page.stat_4_value, "label": home_page.stat_4_label})
-    return stats
+    return [stat for stat in stats if stat["value"] not in (0, "0")]
+
+
+def _igaming_first(case_studies):
+    """Splits an already-ordered case-study iterable into the iGaming
+    portfolio first, everything else after — each group keeps its own
+    relative order. Used to lead both homepage case-study rails with the
+    iGaming platforms, our deepest and most cohesive body of work."""
+    igaming, rest = [], []
+    for case_study in case_studies:
+        bucket = igaming if case_study.industry_id and case_study.industry.slug == IGAMING_INDUSTRY_SLUG else rest
+        bucket.append(case_study)
+    return igaming + rest
 
 
 def home(request):
     home_page = HomePage.load()
     use_cases_by_industry = _homepage_use_cases()
 
-    case_studies = (
+    case_studies = _igaming_first(
         CaseStudy.objects.live()
         .filter(featured=True)
         .select_related("industry")
         .prefetch_related("metrics")[:8]
     )
+
+    # Deliberately disjoint from `case_studies` above (see home.html's
+    # "Recent work" section comment) — showing the same eight case studies
+    # twice on one page reads as broken, not thorough.
+    recent_work_case_studies = _igaming_first(
+        CaseStudy.objects.live()
+        .filter(featured=False)
+        .select_related("industry")
+        .prefetch_related("metrics")
+        .order_by("-published_at")
+    )[:8]
+
+    case_study_total_count = CaseStudy.objects.live().count()
 
     insights = sorted(
         chain(
@@ -103,7 +146,6 @@ def home(request):
     context = {
         "home": home_page,
         "seo": home_page,
-        "tech_partners": Partner.objects.filter(active=True).order_by("order"),
         "service_clusters": ServiceCluster.objects.order_by("order").prefetch_related(
             Prefetch(
                 "services",
@@ -115,6 +157,8 @@ def home(request):
             use_cases_by_industry[0]["use_cases"] if use_cases_by_industry else []
         ),
         "featured_case_studies": case_studies,
+        "recent_work_case_studies": recent_work_case_studies,
+        "case_study_total_count": case_study_total_count,
         "insights": insights,
         "testimonials": Testimonial.objects.filter(featured=True).order_by("order")[:6],
         "client_logos": ClientLogo.objects.filter(active=True).order_by("order"),
@@ -127,7 +171,7 @@ def home(request):
         .order_by("order"),
         "home_faqs": FAQ.objects.filter(placement=FAQ.Placement.HOME, active=True).order_by("order"),
         "contact_form": ContactForm(initial=utm_initial(request)),
-        "stats": _homepage_stats(home_page),
+        "stats": _homepage_stats(home_page, case_study_total_count),
         "hero_capabilities": HERO_CAPABILITIES,
     }
     return render(request, "pages/home.html", context)
@@ -153,10 +197,25 @@ def about(request):
             {"label": "Home", "url": "/"},
             {"label": "About", "url": None},
         ],
+        # About has no backing model (see CONTENT_MAP.md — it's a template
+        # plus TeamMember/ProcessStep/EngagementModel, not its own content
+        # type), so there's no SEOFields instance to attach these to. A
+        # plain dict works with components/seo_meta.html's `seo.*` lookups
+        # the same way a model instance would; fields left out (canonical_url,
+        # og_image, noindex) fall back to seo_meta.html's own defaults.
+        "seo": {
+            "seo_title": "About — NeuroML.ai",
+            "meta_description": (
+                "An AI engineering studio building agents, retrieval systems "
+                "and computer vision that reach production. Six live iGaming "
+                "platforms and 30 delivered projects."
+            ),
+        },
         "team_members": TeamMember.objects.filter(show_on_about=True).order_by("order"),
         "process_steps": ProcessStep.objects.order_by("order")[:5],
         "engagement_models": EngagementModel.objects.order_by("order"),
         "offices": Office.objects.order_by("order"),
+        "contact_form": ContactForm(initial=utm_initial(request)),
     }
     return render(request, "pages/about.html", context)
 

@@ -54,18 +54,6 @@
       </div>
     </div>
   </div>
-
-  {% if tech_partners %}
-    <div class="reveal relative mx-auto mt-20 max-w-4xl px-6 lg:px-8">
-      <div class="flex items-center gap-3 overflow-x-auto rounded-full border border-hairline bg-white p-3">
-        {% for partner in tech_partners %}
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-grid p-2">
-            {% responsive_img partner.logo alt=partner.name css_class="logo-mono h-full w-full object-contain" %}
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
 </section>
 
 {% cache 300 home_db_sections %}
@@ -189,6 +177,83 @@
   </section>
 {% endif %}
 
+{# ------------------------------------------------------------ Recent work #}
+{% comment %}
+  Deliberately disjoint from the featured showcase below (see
+  pages/views.py's recent_work_case_studies comment) — a compact skim strip
+  here, the in-depth carousel further down, never the same case study card
+  twice on one page.
+{% endcomment %}
+{% if recent_work_case_studies %}
+  <section class="border-t border-hairline bg-[#FAFAFA] py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <div class="flex flex-wrap items-end justify-between gap-6">
+        {% include "components/section_heading.html" with eyebrow="Portfolio" heading="Recent work" %}
+        <a
+          href="{% url 'case_study_list' %}"
+          class="reveal shrink-0 text-sm font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4"
+        >
+          View all {{ case_study_total_count }} projects &rarr;
+        </a>
+      </div>
+
+      <div class="mt-14" x-data="caseStudyCarousel({{ recent_work_case_studies|length }})">
+        <div
+          x-ref="track"
+          @scroll.passive="onScroll()"
+          @keydown.right.prevent="next()"
+          @keydown.left.prevent="prev()"
+          class="motion-safe:scroll-smooth flex snap-x snap-mandatory gap-5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="region"
+          aria-label="Recent work"
+        >
+          {% for case_study in recent_work_case_studies %}
+            <a
+              href="{{ case_study.get_absolute_url }}"
+              class="reveal card card-hover w-56 shrink-0 snap-start overflow-hidden sm:w-64"
+            >
+              {% if case_study.hero_image %}
+                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="256px" %}
+              {% endif %}
+              <div class="p-4">
+                <p class="eyebrow">{{ case_study.display_client }}</p>
+                <p class="mt-2 text-sm font-semibold leading-snug text-ink">{{ case_study.title }}</p>
+                {% if case_study.metrics.all %}
+                  <div class="mt-3 flex gap-4 border-t border-hairline pt-3">
+                    {% for metric in case_study.metrics.all|slice:":2" %}
+                      <div>
+                        <p class="font-serif text-lg text-accent">{{ metric.value }}</p>
+                        <p class="text-[11px] text-ink-secondary">{{ metric.label }}</p>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+
+        <div class="mt-6 flex items-center gap-3">
+          <button
+            type="button" @click="prev()" :disabled="atStart"
+            class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+            aria-label="Previous projects"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 8H3.5M3.5 8L7.5 4M3.5 8L7.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button
+            type="button" @click="next()" :disabled="atEnd"
+            class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+            aria-label="Next projects"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endif %}
+
 {# --------------------------------------------------------- Case studies #}
 {% if featured_case_studies %}
   <section class="border-t border-hairline bg-white py-24 lg:py-32">
@@ -200,70 +265,73 @@
         x-data="caseStudyCarousel({{ featured_case_studies|length }})"
       >
         {% comment %}
-          Native scroll-snap does the scrolling — trackpad, touch and momentum
-          all work for free. Alpine only tracks position for the dots/edges
-          and moves focus so arrow keys step between cards. Scrollbar hidden
-          since the dots below are the position indicator.
+          One full-width panel per case study, native scroll-snap between
+          them. Alpine tracks position for the dots/prev-next disabled state
+          and moves focus so arrow keys step between panels — same
+          case-study-carousel.js the "Recent work" strip above uses, just
+          with a single 100%-width panel per slide instead of several.
         {% endcomment %}
         <div
           x-ref="track"
           @scroll.passive="onScroll()"
           @keydown.right.prevent="next()"
           @keydown.left.prevent="prev()"
-          class="motion-safe:scroll-smooth flex snap-x snap-mandatory gap-6 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          class="motion-safe:scroll-smooth flex snap-x snap-mandatory gap-0 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="region"
           aria-label="Featured case studies"
         >
           {% for case_study in featured_case_studies %}
-            <a href="{{ case_study.get_absolute_url }}"
-               class="reveal card card-hover flex w-full shrink-0 snap-start flex-col overflow-hidden sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]">
-              {% if case_study.hero_image %}
-                {% if forloop.counter0 < 3 %}
-                  {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" loading="eager" %}
-                {% else %}
-                  {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" %}
-                {% endif %}
-              {% endif %}
-              <div class="flex flex-1 flex-col p-6">
-                <p class="eyebrow">{{ case_study.display_client }}</p>
-                <p class="mt-3 text-lg font-semibold text-ink">{{ case_study.title }}</p>
-                <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ case_study.excerpt }}</p>
-                {% comment %}
-                  Unconditional on purpose — this box renders whether or not
-                  there are metrics, so min-h keeps every card the same
-                  height either way.
-                {% endcomment %}
-                <div class="mt-6 flex min-h-20 gap-6 border-t border-hairline pt-6">
-                  {% for metric in case_study.metrics.all|slice:":2" %}
-                    <div>
-                      <p class="font-serif text-3xl text-accent">{{ metric.value }}</p>
-                      <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
-                    </div>
-                  {% endfor %}
+            <div class="reveal w-full shrink-0 snap-start">
+              <div class="grid overflow-hidden rounded-[20px] border border-hairline bg-white lg:grid-cols-[45%_55%]">
+                <div class="order-2 flex flex-col justify-center p-8 lg:order-1 lg:p-12">
+                  <p class="font-serif text-3xl text-ink lg:text-4xl">{{ case_study.display_client }}</p>
+                  {% if case_study.excerpt %}
+                    <p class="mt-4 text-base leading-relaxed text-ink-secondary">{{ case_study.excerpt }}</p>
+                  {% endif %}
+                  {% if case_study.industry %}
+                    <p class="mt-4 text-xs tracking-wide text-ink-secondary">Industry: {{ case_study.industry.name }}</p>
+                  {% endif %}
+
+                  {% with metrics=case_study.metrics.all|slice:":4" %}
+                    {% if metrics %}
+                      <div class="mt-8 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-hairline pt-8 sm:grid-cols-2">
+                        {% for metric in metrics %}
+                          <div>
+                            <p class="font-serif text-[2.5rem] leading-none text-accent">{{ metric.value }}</p>
+                            <p class="mt-2 text-xs text-ink-secondary">{{ metric.label }}</p>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+
+                  <div class="mt-8">
+                    {% include "components/pill_cta.html" with label="View full case study" url=case_study.get_absolute_url %}
+                  </div>
                 </div>
-                <p class="mt-auto pt-6 text-sm font-semibold text-ink">View case study &rarr;</p>
+
+                <div class="order-1 lg:order-2">
+                  {% if case_study.hero_image %}
+                    {% if forloop.first %}
+                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" loading="eager" %}
+                    {% else %}
+                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" %}
+                    {% endif %}
+                  {% endif %}
+                </div>
               </div>
-            </a>
+            </div>
           {% endfor %}
         </div>
 
-        <div class="mt-6 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <button
-              type="button" @click="prev()" :disabled="atStart"
-              class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
-              aria-label="Previous case studies"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 8H3.5M3.5 8L7.5 4M3.5 8L7.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button
-              type="button" @click="next()" :disabled="atEnd"
-              class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
-              aria-label="Next case studies"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div>
+        <div class="mt-8 flex items-center justify-center gap-6">
+          <button
+            type="button" @click="prev()" :disabled="atStart"
+            class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+            aria-label="Previous case study"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 8H3.5M3.5 8L7.5 4M3.5 8L7.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
           <div class="flex gap-2" role="tablist" aria-label="Case study position">
             {% for case_study in featured_case_studies %}
               <button
@@ -275,6 +343,13 @@
               ></button>
             {% endfor %}
           </div>
+          <button
+            type="button" @click="next()" :disabled="atEnd"
+            class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+            aria-label="Next case study"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
     </div>

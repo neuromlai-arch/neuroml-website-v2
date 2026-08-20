@@ -50,7 +50,7 @@ class HomepageQueryBudgetTests(TestCase):
     def test_homepage_query_count(self):
         url = reverse("home")
         self.client.get(url)
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(18):
             self.client.get(url)
 
 
