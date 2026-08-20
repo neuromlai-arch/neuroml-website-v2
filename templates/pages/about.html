@@ -8,7 +8,8 @@
   <div class="mx-auto max-w-3xl px-6 text-center lg:px-8">
     <p class="eyebrow">About us</p>
     <h1 class="mt-4 font-serif text-5xl text-ink lg:text-6xl">[TODO: about-page heading]</h1>
-    <p class="mt-6 text-lg leading-relaxed text-ink-secondary">[TODO: about-page intro copy]</p>
+    <p class="mt-6 text-lg leading-relaxed text-ink-secondary">We're an AI engineering studio. We build agents, retrieval systems and vision models that run in production against real users and real data — and the software around them, because an AI feature is a small part of a working product.</p>
+    <p class="mt-4 text-lg leading-relaxed text-ink-secondary">Most of our work is alongside an in-house team rather than replacing one. Some of it can't be named publicly, which is why parts of this site describe work by sector rather than by client.</p>
   </div>
 </section>
 
@@ -42,7 +43,10 @@
       <ol class="mt-14 grid gap-10 border-t border-hairline pt-10 md:grid-cols-5 md:gap-6">
         {% for step in process_steps %}
           <li>
-            <p class="font-serif text-3xl text-ink-muted">{{ forloop.counter|stringformat:"02d" }}</p>
+            {% if step.icon %}
+              {% responsive_img step.icon alt="" css_class="h-6 w-6 object-contain" %}
+            {% endif %}
+            <p class="{% if step.icon %}mt-3{% endif %} font-serif text-3xl text-accent">{{ forloop.counter|stringformat:"02d" }}</p>
             <p class="mt-3 text-base font-semibold text-ink">{{ step.title }}</p>
             {% if step.description %}
               <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ step.description }}</p>
@@ -94,7 +98,7 @@
               {% if office.phone %}<p class="mt-2 text-sm text-ink-secondary">{{ office.phone }}</p>{% endif %}
               {% if office.email %}<p class="text-sm text-ink-secondary">{{ office.email }}</p>{% endif %}
               {% if office.map_url %}
-                <a href="{{ office.map_url }}" class="mt-3 inline-block text-sm font-semibold text-ink hover:underline hover:underline-offset-4">View on map &rarr;</a>
+                <a href="{{ office.map_url }}" class="mt-3 inline-block text-sm font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4">View on map &rarr;</a>
               {% endif %}
             </div>
           </div>

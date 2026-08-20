@@ -15,7 +15,7 @@
       <h1 class="font-serif text-4xl text-ink">{{ object.name }}</h1>
       {% if object.role %}<p class="mt-2 text-lg text-ink-secondary">{{ object.role }}</p>{% endif %}
       {% if object.linkedin_url %}
-        <a href="{{ object.linkedin_url }}" class="mt-4 inline-block text-sm font-semibold text-ink hover:underline hover:underline-offset-4" rel="noopener" target="_blank">
+        <a href="{{ object.linkedin_url }}" class="mt-4 inline-block text-sm font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4" rel="noopener" target="_blank">
           LinkedIn &rarr;
         </a>
       {% endif %}
@@ -31,10 +31,10 @@
       <p class="eyebrow">Recent writing</p>
       <ul class="mt-6 space-y-4">
         {% for post in recent_posts %}
-          <li><a href="{{ post.get_absolute_url }}" class="text-base font-semibold text-ink hover:underline hover:underline-offset-4">{{ post.title }}</a></li>
+          <li><a href="{{ post.get_absolute_url }}" class="text-base font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4">{{ post.title }}</a></li>
         {% endfor %}
         {% for case_study in recent_case_studies %}
-          <li><a href="{{ case_study.get_absolute_url }}" class="text-base font-semibold text-ink hover:underline hover:underline-offset-4">{{ case_study.title }}</a></li>
+          <li><a href="{{ case_study.get_absolute_url }}" class="text-base font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4">{{ case_study.title }}</a></li>
         {% endfor %}
       </ul>
     </div>

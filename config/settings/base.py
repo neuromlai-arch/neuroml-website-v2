@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "marketing",
     "pages",
     "careers",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -68,6 +69,7 @@ TEMPLATES = [
                 "core.context_processors.calendly",
                 "core.context_processors.lead_popup",
                 "core.context_processors.newsletter_form",
+                "core.context_processors.chat_enabled",
             ],
         },
     },
@@ -103,6 +105,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "admin:login"
 
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="no-reply@example.com")
+
+# Grounded chat widget (see chat app). Empty key -> widget renders nothing;
+# see core.context_processors and templates/components/_chat_widget.html.
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
+CHAT_DAILY_TOKEN_BUDGET = env.int("CHAT_DAILY_TOKEN_BUDGET", default=200_000)
 
 # django-q2: the ORM as the broker. No Redis to run for a handful of
 # notification emails a day — see CLAUDE.md's "simpler than Celery" note.

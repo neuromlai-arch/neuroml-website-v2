@@ -9,7 +9,7 @@ class Industry(models.Model):
 
     name = models.CharField(max_length=80, unique=True)
     slug = models.SlugField(max_length=90, unique=True)
-    blurb = models.CharField(max_length=200, blank=True)
+    blurb = models.CharField(max_length=250, blank=True)
     icon = models.ImageField(upload_to="taxonomy/industries/", blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     show_in_nav = models.BooleanField(default=True)

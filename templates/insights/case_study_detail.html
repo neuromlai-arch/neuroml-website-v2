@@ -25,7 +25,7 @@
     <div class="reveal card mt-10 grid grid-cols-2 gap-6 p-8 sm:grid-cols-4">
       {% for metric in object.metrics.all %}
         <div>
-          <p class="font-serif text-4xl text-ink">{{ metric.value }}</p>
+          <p class="font-serif text-4xl text-accent">{{ metric.value }}</p>
           <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
         </div>
       {% endfor %}

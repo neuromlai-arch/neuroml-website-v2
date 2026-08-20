@@ -56,7 +56,7 @@
         {% if object.apply_email %}
           <p class="mt-6 text-xs text-ink-muted">
             Prefer email? Send your application to
-            <a href="mailto:{{ object.apply_email }}?subject=Application: {{ object.title|urlencode }}" class="font-semibold text-ink hover:underline hover:underline-offset-4">{{ object.apply_email }}</a>.
+            <a href="mailto:{{ object.apply_email }}?subject=Application: {{ object.title|urlencode }}" class="font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4">{{ object.apply_email }}</a>.
           </p>
         {% endif %}
       {% else %}

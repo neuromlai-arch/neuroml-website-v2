@@ -10,7 +10,7 @@ BreadcrumbList JSON-LD.
       <li class="flex items-center gap-2">
         {% if not forloop.first %}<span aria-hidden="true">/</span>{% endif %}
         {% if item.url and not forloop.last %}
-          <a href="{{ item.url }}" class="hover:text-ink hover:underline hover:underline-offset-4">{{ item.label }}</a>
+          <a href="{{ item.url }}" class="hover:text-accent hover:underline hover:underline-offset-4">{{ item.label }}</a>
         {% else %}
           <span aria-current="page" class="text-ink">{{ item.label }}</span>
         {% endif %}

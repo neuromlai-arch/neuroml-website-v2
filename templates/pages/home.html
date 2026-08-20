@@ -76,9 +76,11 @@
       <p class="eyebrow text-white/50">Recognised by</p>
       <div class="mt-8 flex flex-wrap items-center gap-x-12 gap-y-6">
         {% for r in recognitions %}
-          <a href="{{ r.url|default:'#' }}" class="shrink-0">
-            {% responsive_img r.badge alt=r.name css_class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
-          </a>
+          {% if r.badge %}
+            <a href="{{ r.url|default:'#' }}" class="shrink-0">
+              {% responsive_img r.badge alt=r.name css_class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
+            </a>
+          {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -131,8 +133,11 @@
             <ul class="mt-6 space-y-3 border-t border-hairline pt-6">
               {% for service in cluster.services.all %}
                 <li>
-                  <a href="{{ service.get_absolute_url }}" class="text-sm text-ink-body hover:text-ink hover:underline hover:underline-offset-4">
-                    {{ service.title }}
+                  <a href="{{ service.get_absolute_url }}" class="flex items-center gap-2 text-sm text-ink-body hover:text-accent hover:underline hover:underline-offset-4">
+                    {% if service.icon %}
+                      {% responsive_img service.icon alt="" css_class="h-4 w-4 shrink-0 object-contain" %}
+                    {% endif %}
+                    <span>{{ service.title }}</span>
                   </a>
                 </li>
               {% empty %}
@@ -170,7 +175,7 @@
             hx-swap="innerHTML"
             hx-indicator="#industry-panel"
             class="rounded-full border bg-white px-4 py-2 text-sm font-semibold transition"
-            :class="active === {{ forloop.counter0 }} ? 'border-ink bg-ink text-white' : 'border-hairline text-ink-body hover:border-ink'"
+            :class="active === {{ forloop.counter0 }} ? 'border-accent bg-accent text-white' : 'border-hairline text-ink-body hover:border-ink'"
           >
             {{ entry.industry.name }}
           </button>
@@ -190,41 +195,98 @@
     <div class="mx-auto max-w-7xl px-6 lg:px-8">
       {% include "components/section_heading.html" with eyebrow="Case studies" heading=home.case_studies_heading %}
 
-      <div class="mt-14 grid gap-6 lg:grid-cols-3">
-        {% for case_study in featured_case_studies %}
-          <a href="{{ case_study.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
-            {% if case_study.hero_image %}
-              {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, 100vw" %}
-            {% endif %}
-            <div class="flex flex-1 flex-col p-6">
-              <p class="eyebrow">{{ case_study.display_client }}</p>
-              <p class="mt-3 text-lg font-semibold text-ink">{{ case_study.title }}</p>
-              <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ case_study.excerpt }}</p>
-              {% if case_study.metrics.all %}
-                <div class="mt-6 flex gap-6 border-t border-hairline pt-6">
+      <div
+        class="mt-14"
+        x-data="caseStudyCarousel({{ featured_case_studies|length }})"
+      >
+        {% comment %}
+          Native scroll-snap does the scrolling — trackpad, touch and momentum
+          all work for free. Alpine only tracks position for the dots/edges
+          and moves focus so arrow keys step between cards. Scrollbar hidden
+          since the dots below are the position indicator.
+        {% endcomment %}
+        <div
+          x-ref="track"
+          @scroll.passive="onScroll()"
+          @keydown.right.prevent="next()"
+          @keydown.left.prevent="prev()"
+          class="motion-safe:scroll-smooth flex snap-x snap-mandatory gap-6 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="region"
+          aria-label="Featured case studies"
+        >
+          {% for case_study in featured_case_studies %}
+            <a href="{{ case_study.get_absolute_url }}"
+               class="reveal card card-hover flex w-full shrink-0 snap-start flex-col overflow-hidden sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]">
+              {% if case_study.hero_image %}
+                {% if forloop.counter0 < 3 %}
+                  {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" loading="eager" %}
+                {% else %}
+                  {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" %}
+                {% endif %}
+              {% endif %}
+              <div class="flex flex-1 flex-col p-6">
+                <p class="eyebrow">{{ case_study.display_client }}</p>
+                <p class="mt-3 text-lg font-semibold text-ink">{{ case_study.title }}</p>
+                <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ case_study.excerpt }}</p>
+                {% comment %}
+                  Unconditional on purpose — this box renders whether or not
+                  there are metrics, so min-h keeps every card the same
+                  height either way.
+                {% endcomment %}
+                <div class="mt-6 flex min-h-20 gap-6 border-t border-hairline pt-6">
                   {% for metric in case_study.metrics.all|slice:":2" %}
                     <div>
-                      <p class="font-serif text-3xl text-ink">{{ metric.value }}</p>
+                      <p class="font-serif text-3xl text-accent">{{ metric.value }}</p>
                       <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
                     </div>
                   {% endfor %}
                 </div>
-              {% endif %}
-              <p class="mt-auto pt-6 text-sm font-semibold text-ink">View case study &rarr;</p>
-            </div>
-          </a>
-        {% endfor %}
+                <p class="mt-auto pt-6 text-sm font-semibold text-ink">View case study &rarr;</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+
+        <div class="mt-6 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button
+              type="button" @click="prev()" :disabled="atStart"
+              class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+              aria-label="Previous case studies"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 8H3.5M3.5 8L7.5 4M3.5 8L7.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button
+              type="button" @click="next()" :disabled="atEnd"
+              class="flex h-9 w-9 items-center justify-center rounded-full border border-ink text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink"
+              aria-label="Next case studies"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="flex gap-2" role="tablist" aria-label="Case study position">
+            {% for case_study in featured_case_studies %}
+              <button
+                type="button" role="tab" @click="goTo({{ forloop.counter0 }})"
+                :aria-selected="active === {{ forloop.counter0 }} ? 'true' : 'false'"
+                :class="active === {{ forloop.counter0 }} ? 'bg-ink' : 'bg-hairline hover:bg-ink/40'"
+                class="h-2 w-2 rounded-full transition-colors"
+                aria-label="Go to case study {{ forloop.counter }} of {{ featured_case_studies|length }}: {{ case_study.title }}"
+              ></button>
+            {% endfor %}
+          </div>
+        </div>
       </div>
     </div>
   </section>
 {% endif %}
 
 {# ------------------------------------------------------------- Insights #}
-{% if insights %}
-  <section class="border-t border-hairline bg-[#FAFAFA] py-20 lg:py-24">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
-      {% include "components/section_heading.html" with eyebrow="Insights" heading=home.insights_heading %}
+<section class="border-t border-hairline bg-[#FAFAFA] py-20 lg:py-24">
+  <div class="mx-auto max-w-7xl px-6 lg:px-8">
+    {% include "components/section_heading.html" with eyebrow="Insights" heading=home.insights_heading %}
 
+    {% if insights %}
       <div class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {% for item in insights %}
           <a href="{{ item.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
@@ -239,9 +301,11 @@
           </a>
         {% endfor %}
       </div>
-    </div>
-  </section>
-{% endif %}
+    {% else %}
+      <p class="mt-14 text-sm text-ink-muted">No articles published yet.</p>
+    {% endif %}
+  </div>
+</section>
 
 {# --------------------------------------------------------- Testimonials #}
 {% if home.show_testimonials and testimonials %}
@@ -276,7 +340,10 @@
       <ol class="mt-14 grid gap-10 border-t border-hairline pt-10 md:grid-cols-5 md:gap-6">
         {% for step in process_steps %}
           <li class="reveal">
-            <p class="font-serif text-3xl text-ink-muted">{{ forloop.counter|stringformat:"02d" }}</p>
+            {% if step.icon %}
+              {% responsive_img step.icon alt="" css_class="h-6 w-6 object-contain" %}
+            {% endif %}
+            <p class="{% if step.icon %}mt-3{% endif %} font-serif text-3xl text-accent">{{ forloop.counter|stringformat:"02d" }}</p>
             <p class="mt-3 text-base font-semibold text-ink">{{ step.title }}</p>
             {% if step.description %}
               <p class="mt-2 text-sm leading-relaxed text-ink-secondary">{{ step.description }}</p>
@@ -331,12 +398,22 @@
       {% include "components/section_heading.html" with eyebrow="Our stack" heading="Built on tools that scale" %}
       <div class="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
         {% for tech in tech_stack %}
-          <a href="{{ tech.get_absolute_url }}" class="card card-hover flex flex-col items-center justify-center gap-3 bg-white p-6 text-center">
-            {% if tech.logo %}
-              {% responsive_img tech.logo alt=tech.name css_class="logo-mono h-8 w-auto" %}
-            {% endif %}
-            <p class="text-xs font-semibold text-ink">{{ tech.name }}</p>
-          </a>
+          {% if tech.is_live %}
+            <a href="{{ tech.get_absolute_url }}" class="card card-hover flex flex-col items-center justify-center gap-3 bg-white p-6 text-center">
+              {% if tech.logo %}
+                {% responsive_img tech.logo alt=tech.name css_class="logo-mono h-8 w-auto" %}
+              {% endif %}
+              <p class="text-xs font-semibold text-ink">{{ tech.name }}</p>
+            </a>
+          {% else %}
+            {# No detail page live for this one — a static badge, not a dead link. #}
+            <div class="card flex flex-col items-center justify-center gap-3 bg-white p-6 text-center">
+              {% if tech.logo %}
+                {% responsive_img tech.logo alt=tech.name css_class="logo-mono h-8 w-auto" %}
+              {% endif %}
+              <p class="text-xs font-semibold text-ink">{{ tech.name }}</p>
+            </div>
+          {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -357,8 +434,10 @@
 {% endcache %}
 
 {# --------------------------------------------------------------------- CTA #}
-<section id="contact" class="border-t border-hairline bg-band py-24 text-white lg:py-32">
-  <div class="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:px-8">
+<section id="contact" class="relative overflow-hidden border-t border-hairline bg-band py-24 text-white lg:py-32">
+  {# Radial accent glow, one corner only — a punctuation mark on the one big dark surface, not a repaint of it. #}
+  <div class="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle,rgba(168,30,30,0.28)_0%,rgba(168,30,30,0)_70%)]" aria-hidden="true"></div>
+  <div class="relative mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:px-8">
     <div class="reveal">
       <p class="eyebrow text-white/50">Get in touch</p>
       <h2 class="mt-4 font-serif text-4xl text-white lg:text-5xl">Tell us what's stuck</h2>

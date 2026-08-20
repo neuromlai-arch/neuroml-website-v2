@@ -18,7 +18,11 @@
       </div>
     </a>
   {% empty %}
-    {% include "components/empty_state.html" with message="No webinars match those filters." %}
+    {% if active_tag %}
+      {% include "components/empty_state.html" with message="No webinars match those filters." %}
+    {% else %}
+      {% include "components/empty_state.html" with message="No webinars published yet." %}
+    {% endif %}
   {% endfor %}
 </div>
 {% include "components/pagination.html" with page_obj=page_obj querystring=querystring htmx_target="#results" %}

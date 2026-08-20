@@ -82,7 +82,7 @@ def home(request):
         CaseStudy.objects.live()
         .filter(featured=True)
         .select_related("industry")
-        .prefetch_related("metrics")[:3]
+        .prefetch_related("metrics")[:8]
     )
 
     insights = sorted(
@@ -120,8 +120,10 @@ def home(request):
         "client_logos": ClientLogo.objects.filter(active=True).order_by("order"),
         "process_steps": ProcessStep.objects.order_by("order")[:5],
         "comparison_table": comparison_table,
-        "tech_stack": Technology.objects.live()
-        .filter(show_in_stack_grid=True)
+        # Deliberately not .live() — the stack grid is a logo badge, not a
+        # link into content, so a technology can be featured here even while
+        # its own detail page is unpublished. See tech_stack card markup.
+        "tech_stack": Technology.objects.filter(show_in_stack_grid=True)
         .order_by("order"),
         "home_faqs": FAQ.objects.filter(placement=FAQ.Placement.HOME, active=True).order_by("order"),
         "contact_form": ContactForm(initial=utm_initial(request)),

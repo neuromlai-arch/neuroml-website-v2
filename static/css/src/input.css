@@ -12,7 +12,7 @@
     @apply font-serif font-normal;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-ink;
+    @apply outline-2 outline-offset-2 outline-accent;
   }
   [x-cloak] {
     display: none !important;
@@ -59,25 +59,26 @@
   }
 
   /* The signature pill CTA: fully rounded, with a circular arrow badge inset
-     on the right. Primary is solid ink, inverts to white-on-black-border on
-     hover. No third button style. */
+     on the right. Primary is solid accent — the one deliberate colour
+     punctuation in the system — darkening on hover rather than inverting.
+     No third button style. */
   .btn-pill {
-    @apply inline-flex items-center gap-3 rounded-full border border-ink bg-ink py-2 pl-6 pr-2
+    @apply inline-flex items-center gap-3 rounded-full border border-accent bg-accent py-2 pl-6 pr-2
            text-sm font-semibold text-white transition
-           hover:bg-white hover:text-ink;
+           hover:border-accent-hover hover:bg-accent-hover;
   }
   .btn-pill__icon {
-    @apply flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink
+    @apply flex h-9 w-9 items-center justify-center rounded-full bg-white text-accent
            transition-transform duration-300 group-hover:translate-x-0.5;
   }
   .btn-pill--dark {
-    @apply border-white bg-white text-ink hover:bg-band hover:text-white;
+    @apply border-accent bg-accent text-white hover:border-accent-hover hover:bg-accent-hover;
   }
   .btn-pill--dark .btn-pill__icon {
-    @apply bg-ink text-white transition-colors duration-300;
+    @apply bg-white text-accent transition-colors duration-300;
   }
   .btn-pill--dark:hover .btn-pill__icon {
-    @apply bg-white text-ink;
+    @apply bg-white text-accent-hover;
   }
 
   /* Secondary: transparent with a 1px ink border. */
@@ -96,8 +97,11 @@
     @apply grayscale transition duration-300 hover:grayscale-0;
   }
 
+  /* Ink text + a left border, not a red wash — the accent already owns red,
+     so error can't lean on colour alone to read as "error" without the two
+     colliding. The border and icon still carry the signal. */
   .form-error {
-    @apply flex items-center gap-1.5 text-sm text-error;
+    @apply flex items-center gap-1.5 border-l-2 border-error py-1 pl-3 text-sm text-ink-body;
   }
   .form-success {
     @apply flex items-center gap-1.5 text-sm text-success;

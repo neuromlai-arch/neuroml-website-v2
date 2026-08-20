@@ -13,7 +13,7 @@
           <div class="mt-6 flex gap-6 border-t border-hairline pt-6">
             {% for metric in case_study.metrics.all|slice:":2" %}
               <div>
-                <p class="font-serif text-3xl text-ink">{{ metric.value }}</p>
+                <p class="font-serif text-3xl text-accent">{{ metric.value }}</p>
                 <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
               </div>
             {% endfor %}

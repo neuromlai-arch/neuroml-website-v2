@@ -1,10 +1,12 @@
 /** Every colour, font size, radius, and shadow used on the site lives here.
  *  Restyling the whole site is a matter of editing this one file.
  *
- *  Monochrome, editorial, engineering-led. Black and white only — hierarchy
- *  comes from scale, weight, and whitespace, not colour. `error` and
- *  `success` are the one exception, reserved for form validation states;
- *  never use them in a CTA, link, badge, or as decoration. */
+ *  Monochrome, editorial, engineering-led. Hierarchy comes from scale,
+ *  weight, and whitespace, not colour. `accent` is the one deliberate
+ *  punctuation colour — primary actions and a handful of state indicators,
+ *  never large fills or body text. `error` and `success` are reserved for
+ *  form validation states; never use them in a CTA, link, badge, or as
+ *  decoration. */
 module.exports = {
   content: [
     "./templates/**/*.html",
@@ -20,6 +22,9 @@ module.exports = {
         hairline: "#E5E5E5",
         band: "#0B0B0B",
         grid: "#F4F4F4",
+        accent: "#A81E1E",
+        "accent-hover": "#8C1818",
+        "accent-subtle": "#FBF1F1",
         error: "#C1121F",
         success: "#1B7F4C",
       },

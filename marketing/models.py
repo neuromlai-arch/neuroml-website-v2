@@ -128,6 +128,7 @@ class ContactSubmission(TimeStampedModel):
         FOOTER = "footer", "Footer CTA"
         POPUP = "popup", "Lead popup"
         HIRE = "hire", "Hire developers"
+        CHAT = "chat", "Chat widget"
         OTHER = "other", "Other"
 
     class ProjectStage(models.TextChoices):

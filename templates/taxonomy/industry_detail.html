@@ -8,6 +8,9 @@
   <header class="border-b border-hairline bg-white py-20 lg:py-28">
     <div class="mx-auto max-w-4xl px-6 text-center lg:px-8">
       <p class="eyebrow">Industry</p>
+      {% if object.icon %}
+        {% responsive_img object.icon alt="" css_class="mx-auto mt-4 h-10 w-10 object-contain" %}
+      {% endif %}
       <h1 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ object.name }}</h1>
       {% if object.blurb %}
         <p class="mt-4 text-lg leading-relaxed text-ink-secondary">{{ object.blurb }}</p>
@@ -48,7 +51,7 @@
                   <div class="mt-6 flex gap-6 border-t border-hairline pt-6">
                     {% for metric in case_study.metrics.all|slice:":2" %}
                       <div>
-                        <p class="font-serif text-2xl text-ink">{{ metric.value }}</p>
+                        <p class="font-serif text-2xl text-accent">{{ metric.value }}</p>
                         <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
                       </div>
                     {% endfor %}

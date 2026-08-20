@@ -1,0 +1,130 @@
+{% comment %}
+The grounded chat widget. Only included in base.html when `chat_enabled` is
+true (core.context_processors.chat_enabled) — see the surrounding {% if %}
+in base.html, not here, so the launcher never renders without an
+ANTHROPIC_API_KEY.
+
+Degrades to the real contact form (not a stub) on rate limit, budget
+exhaustion, or a network error — chat-widget.js swaps in the markup
+already rendered below in #chat-degraded, which is the same
+_contact_form_fields.html partial every other form on the site uses.
+{% endcomment %}
+<div
+  x-data="chatWidget()"
+  x-init="init()"
+  @keydown.escape.window="close()"
+  class="fixed bottom-6 right-6 z-50"
+>
+  <button
+    type="button"
+    @click="toggle()"
+    x-ref="launcher"
+    class="flex h-14 w-14 items-center justify-center rounded-full border border-ink bg-ink text-white transition hover:bg-white hover:text-ink"
+    :aria-expanded="open ? 'true' : 'false'"
+    aria-label="Chat with us"
+  >
+    <svg x-show="!open" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H10l-4.5 4.5V16H6.5A2.5 2.5 0 0 1 4 13.5v-8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <svg x-show="open" x-cloak width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+
+  <div
+    x-show="open"
+    x-cloak
+    x-trap.noscroll="open"
+    @click.outside="close()"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Chat with us"
+    class="absolute bottom-[72px] right-0 flex h-[600px] w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-card border border-hairline bg-white"
+  >
+    <div class="flex items-center justify-between border-b border-hairline px-5 py-4">
+      <p class="text-sm font-semibold text-ink">Chat with us</p>
+      <button type="button" @click="close()" aria-label="Close chat" class="text-ink-secondary hover:text-ink">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    {# Chat pane — hidden entirely once degraded. #}
+    <div x-show="!degraded" class="flex flex-1 flex-col overflow-hidden">
+      <div
+        x-ref="log"
+        class="flex-1 space-y-4 overflow-y-auto px-5 py-4"
+        role="log"
+        aria-live="polite"
+        aria-label="Conversation"
+      >
+        <p class="text-sm leading-relaxed text-ink-secondary">
+          Ask about our services, case studies, or how we work — answers are grounded in what's actually published on this site.
+        </p>
+        <template x-for="(message, index) in messages" :key="index">
+          <div :class="message.role === 'user' ? 'ml-8 text-right' : 'mr-8'">
+            <div
+              :class="message.role === 'user'
+                ? 'inline-block rounded-card bg-ink px-4 py-2.5 text-left text-sm text-white'
+                : 'inline-block rounded-card border border-hairline px-4 py-2.5 text-left text-sm text-ink-body'"
+              x-text="message.text"
+            ></div>
+            <div x-show="message.sources && message.sources.length" class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+              <template x-for="source in message.sources" :key="source.url">
+                <a :href="source.url" class="text-xs font-semibold text-ink-secondary hover:text-accent hover:underline" x-text="source.title"></a>
+              </template>
+            </div>
+          </div>
+        </template>
+        <p x-show="streaming" class="text-xs text-ink-muted">Thinking…</p>
+
+        <div x-show="escalate" class="mr-8 rounded-card border border-hairline bg-grid p-4">
+          <p class="text-xs leading-relaxed text-ink-secondary">Want to talk to a person? Leave your email and we'll follow up, or book a call directly.</p>
+          <form @submit.prevent="sendEmail()" class="mt-3 flex gap-2">
+            <label for="chat-email" class="sr-only">Your email</label>
+            <input
+              type="email" id="chat-email" x-model="email" placeholder="you@company.com" required
+              class="w-full rounded-lg border border-hairline bg-white px-3 py-2 text-xs text-ink-body placeholder:text-ink-muted"
+            >
+            <button type="submit" class="shrink-0 rounded-full bg-ink px-3 py-2 text-xs font-semibold text-white hover:bg-ink/90">Send</button>
+          </form>
+          <a x-show="calendlyUrl" :href="calendlyUrl" target="_blank" rel="noopener" class="mt-2 inline-block text-xs font-semibold text-ink hover:text-accent hover:underline">Book a call &rarr;</a>
+        </div>
+      </div>
+
+      <form @submit.prevent="send()" class="flex items-end gap-2 border-t border-hairline p-3">
+        <label for="chat-input" class="sr-only">Message</label>
+        <textarea
+          x-ref="input"
+          id="chat-input"
+          x-model="draft"
+          @keydown.enter.prevent="if (!$event.shiftKey) send()"
+          rows="1"
+          placeholder="Ask a question…"
+          :disabled="streaming || messageCapReached"
+          class="max-h-24 flex-1 resize-none rounded-lg border border-hairline bg-white px-3 py-2 text-sm text-ink-body placeholder:text-ink-muted disabled:opacity-50"
+        ></textarea>
+        <button
+          type="submit"
+          :disabled="streaming || !draft.trim() || messageCapReached"
+          aria-label="Send message"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white transition hover:bg-ink/90 disabled:opacity-30"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+    </div>
+
+    {% comment %}
+      Degraded pane — points at the real contact form rather than embedding
+      a second copy of it: this widget renders on every page, and the
+      contact page's own form already uses id="contact-form" — a duplicate
+      id would make HTMX's hx-target resolve to whichever copy is first in
+      the DOM, silently swapping the wrong one.
+    {% endcomment %}
+    <div x-show="degraded" x-cloak class="flex flex-1 flex-col items-start gap-4 px-5 py-6">
+      <p x-text="degradeReason" class="text-sm leading-relaxed text-ink-secondary"></p>
+      <a href="/contact/" class="group btn-pill">
+        <span>Go to the contact form</span>
+        <span class="btn-pill__icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8H12.5M12.5 8L8.5 4M12.5 8L8.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</div>

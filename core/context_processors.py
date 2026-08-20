@@ -53,7 +53,10 @@ def megamenu(request):
 def footer_chrome(request):
     recognitions = cache.get(FOOTER_CACHE_KEY)
     if recognitions is None:
-        recognitions = list(Recognition.objects.order_by("order"))
+        # A badge-less Recognition has nothing to show — exclude it here so
+        # both the footer and the homepage trust band disappear (heading
+        # included) rather than rendering a label over empty space.
+        recognitions = list(Recognition.objects.exclude(badge="").order_by("order"))
         cache.set(FOOTER_CACHE_KEY, recognitions, FOOTER_CACHE_TTL)
     return {"recognitions": recognitions}
 
@@ -125,3 +128,13 @@ def newsletter_form(request):
     from marketing.forms import NewsletterForm
 
     return {"newsletter_form": NewsletterForm()}
+
+
+def chat_enabled(request):
+    """Gates the chat launcher at the template level, not just in CSS/JS —
+    with no ANTHROPIC_API_KEY the widget must not render at all, so the
+    site works with no chatbot rather than showing a launcher that 400s on
+    first click."""
+    from django.conf import settings
+
+    return {"chat_enabled": bool(settings.ANTHROPIC_API_KEY)}
