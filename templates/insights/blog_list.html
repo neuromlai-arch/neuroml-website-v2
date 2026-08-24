@@ -10,22 +10,24 @@
   </div>
 
   <div class="mt-10 space-y-4">
-    <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by industry">
-      <a href="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
-         hx-get="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
-         hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
-         class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_industry %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
-        All industries
-      </a>
-      {% for industry in industries %}
-        <a href="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
-           hx-get="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
+    {% if industries %}
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by industry">
+        <a href="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
+           hx-get="{% url 'blog_list' %}{% if active_tag %}?tag={{ active_tag }}{% endif %}"
            hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
-           class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_industry == industry.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
-          {{ industry.name }}
+           class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if not active_industry %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+          All industries
         </a>
-      {% endfor %}
-    </div>
+        {% for industry in industries %}
+          <a href="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
+             hx-get="{% url 'blog_list' %}?industry={{ industry.slug }}{% if active_tag %}&tag={{ active_tag }}{% endif %}"
+             hx-target="#results" hx-swap="innerHTML" hx-push-url="true"
+             class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if active_industry == industry.slug %}border-ink bg-ink text-white{% else %}border-hairline text-ink-body hover:border-ink{% endif %}">
+            {{ industry.name }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% if tags %}
       <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag">
         <a href="{% url 'blog_list' %}{% if active_industry %}?industry={{ active_industry }}{% endif %}"

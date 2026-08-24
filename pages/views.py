@@ -21,7 +21,7 @@ from marketing.models import (
     ClientLogo, ComparisonTable, EngagementModel, FAQ, ProcessStep,
     Testimonial,
 )
-from pages.models import HomePage, Office
+from pages.models import AboutPage, HomePage, Office
 from people.models import TeamMember
 from solutions.models import Service, Technology, UseCase
 from taxonomy.models import Industry, ServiceCluster
@@ -192,25 +192,16 @@ def home_industry_panel(request, slug):
 
 
 def about(request):
+    about_page = AboutPage.load()
     context = {
         "breadcrumbs": [
             {"label": "Home", "url": "/"},
             {"label": "About", "url": None},
         ],
-        # About has no backing model (see CONTENT_MAP.md — it's a template
-        # plus TeamMember/ProcessStep/EngagementModel, not its own content
-        # type), so there's no SEOFields instance to attach these to. A
-        # plain dict works with components/seo_meta.html's `seo.*` lookups
-        # the same way a model instance would; fields left out (canonical_url,
-        # og_image, noindex) fall back to seo_meta.html's own defaults.
-        "seo": {
-            "seo_title": "About — NeuroML.ai",
-            "meta_description": (
-                "An AI engineering studio building agents, retrieval systems "
-                "and computer vision that reach production. Six live iGaming "
-                "platforms and 30 delivered projects."
-            ),
-        },
+        "about": about_page,
+        "seo": about_page,
+        "capabilities": about_page.capabilities.all(),
+        "expectations": about_page.expectations.all(),
         "team_members": TeamMember.objects.filter(show_on_about=True).order_by("order"),
         "process_steps": ProcessStep.objects.order_by("order")[:5],
         "engagement_models": EngagementModel.objects.order_by("order"),
@@ -233,23 +224,19 @@ def contact(request):
 
 
 def privacy(request):
-    context = {
-        "breadcrumbs": [
-            {"label": "Home", "url": "/"},
-            {"label": "Privacy policy", "url": None},
-        ],
-    }
-    return render(request, "pages/privacy.html", context)
+    # Unpublished: real copy hasn't been written yet (still [TODO] in
+    # templates/pages/privacy.html) and the site collects personal data
+    # through five forms, so a placeholder policy must not be linkable.
+    # Restore by reverting this to `render(request, "pages/privacy.html", ...)`
+    # once real copy lands — see DEPLOY.md for the full reference list of
+    # what else was disabled alongside this (footer links, sitemap entry,
+    # test_smoke.py's SIMPLE_GET_URLS).
+    raise Http404
 
 
 def terms(request):
-    context = {
-        "breadcrumbs": [
-            {"label": "Home", "url": "/"},
-            {"label": "Terms of service", "url": None},
-        ],
-    }
-    return render(request, "pages/terms.html", context)
+    # Unpublished — see privacy() above, same reason, same restore path.
+    raise Http404
 
 
 def make_preview_token(obj):

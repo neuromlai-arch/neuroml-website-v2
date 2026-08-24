@@ -1,6 +1,6 @@
 """Attaches badge images to Recognition rows from a directory of files named
-<slug>.png or <slug>.jpg, where <slug> is slugify(name) — same pattern as
-attach_case_study_images.
+<slug>.svg or <slug>.png, where <slug> is slugify(name) — same pattern as
+attach_icons.
 
 Idempotent: skips any Recognition that already has a badge.
 
@@ -19,12 +19,12 @@ from marketing.models import Recognition
 
 
 class Command(BaseCommand):
-    help = "Attaches <slug>.png/<slug>.jpg badge images to Recognition rows from --source."
+    help = "Attaches <slug>.svg/<slug>.png badge images to Recognition rows from --source."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--source", required=True,
-            help="Directory to search for <slug>.png / <slug>.jpg files, where "
+            help="Directory to search for <slug>.svg / <slug>.png files, where "
                  "<slug> is slugify(name).",
         )
         parser.add_argument(
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         )
 
     def _find_image(self, source, slug):
-        for suffix in (".png", ".jpg"):
+        for suffix in (".svg", ".png"):
             candidate = source / f"{slug}{suffix}"
             if candidate.is_file():
                 return candidate

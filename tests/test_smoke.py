@@ -39,12 +39,17 @@ class SeedDataMixin:
 # Named URLs that take no arguments and are always a plain GET -> 200.
 SIMPLE_GET_URLS = [
     "health", "robots_txt", "sitemap",
-    "home", "about", "contact", "privacy", "terms", "demo",
+    "home", "about", "contact", "demo",
     "industry_list", "service_list", "product_list", "technology_list",
     "hire_role_list", "blog_list", "case_study_list", "handbook_list",
     "webinar_list", "job_posting_list", "use_case_list",
     "contact_submit", "demo_submit", "popup_submit", "newsletter_signup",
 ]
+
+# "privacy"/"terms" are deliberately unpublished (still [TODO] copy) —
+# pinned here as 404 so a future change can't silently re-expose a
+# placeholder legal policy. See pages/views.py and DEPLOY.md.
+UNPUBLISHED_GET_URLS = ["privacy", "terms"]
 
 
 class SimpleURLTests(SeedDataMixin, TestCase):
@@ -53,6 +58,12 @@ class SimpleURLTests(SeedDataMixin, TestCase):
             with self.subTest(url=name):
                 response = self.client.get(reverse(name))
                 self.assertEqual(response.status_code, 200)
+
+    def test_unpublished_urls_return_404(self):
+        for name in UNPUBLISHED_GET_URLS:
+            with self.subTest(url=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 404)
 
 
 class DetailURLTests(SeedDataMixin, TestCase):
@@ -121,8 +132,14 @@ class DetailURLTests(SeedDataMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_team_member_detail(self):
+        # seed_demo no longer creates TeamMember rows (see its module
+        # docstring) — this test needs one regardless, so it creates its
+        # own rather than depending on a shared seeding side effect.
         member = TeamMember.objects.filter(show_on_about=True).first()
-        self.assertIsNotNone(member)
+        if member is None:
+            member = TeamMember.objects.create(
+                name="Test Author", slug="test-author", show_on_about=True,
+            )
         response = self.client.get(reverse("team_member_detail", args=[member.slug]))
         self.assertEqual(response.status_code, 200)
 

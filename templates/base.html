@@ -14,11 +14,14 @@
   <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}">
   <script type="application/ld+json">{{ organization_json_ld }}</script>
   {% if site_settings.gtm_container_id %}
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','{{ site_settings.gtm_container_id }}');</script>
+    {% comment %}
+      This only stores the container id — it does not load GTM. Actual
+      loading is gated on cookie consent; see static/js/cookie-consent.js's
+      loadGTM(). No <noscript> fallback: a no-JS visitor can't run the
+      consent banner either, so the compliant default for them is simply no
+      tracking, not an unconditional tag.
+    {% endcomment %}
+    <script>window.GTM_CONTAINER_ID = "{{ site_settings.gtm_container_id|escapejs }}";</script>
   {% endif %}
   {% block extra_head %}{% endblock %}
 </head>
@@ -28,16 +31,22 @@
   x-init="scrolled = window.scrollY > 40"
   @scroll.window="scrolled = window.scrollY > 40"
 >
-  {% if site_settings.gtm_container_id %}
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ site_settings.gtm_container_id }}"
-      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  {% endif %}
   <a href="#main-content"
      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]
             focus:rounded-full focus:border focus:border-ink focus:bg-ink focus:px-4 focus:py-2 focus:text-sm
             focus:font-semibold focus:text-white">
     Skip to content
   </a>
+
+  {% if site_settings.gtm_container_id or site_settings.calendly_url %}
+    {% comment %}
+      Placed here (right after the skip link, before the header) rather than
+      at the end of body — it's `fixed bottom-0` regardless, but DOM/tab
+      order still runs top-to-bottom, and a consent choice shouldn't require
+      tabbing through the entire page's nav and content to reach.
+    {% endcomment %}
+    {% include "components/_cookie_consent_banner.html" %}
+  {% endif %}
 
   <header
     class="fixed inset-x-0 top-0 z-50 transition-all duration-200"
@@ -230,20 +239,19 @@
         <div class="mt-16 flex flex-wrap items-center gap-8 border-t border-white/15 pt-8">
           {% for r in recognitions %}
             {% if r.badge %}
-              <a href="{{ r.url|default:'#' }}">
-                {% responsive_img r.badge alt=r.name css_class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
-              </a>
+              {% include "components/recognition_badge.html" with r=r %}
             {% endif %}
           {% endfor %}
         </div>
       {% endif %}
 
-      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/15 pt-8 text-xs text-white/50 md:flex-row">
+      {% comment %}
+        Privacy/Terms links removed — both pages are unpublished (still
+        [TODO] copy, 404 via pages/views.py) until real legal text exists.
+        See DEPLOY.md for the full list of what else was disabled.
+      {% endcomment %}
+      <div class="mt-12 border-t border-white/15 pt-8 text-xs text-white/50">
         <p>&copy; {% now "Y" %} {{ site_settings.site_name|default:"[TODO: company name]" }}. All rights reserved.</p>
-        <div class="flex gap-4">
-          <a href="{% url 'privacy' %}" class="hover:text-white">Privacy</a>
-          <a href="{% url 'terms' %}" class="hover:text-white">Terms</a>
-        </div>
       </div>
     </div>
   </footer>
@@ -338,8 +346,21 @@
     which Alpine's CDN build dispatches synchronously the moment its own
     script finishes executing — so this listener has to be attached before
     that script tag runs, not after (deferred scripts still execute in
-    document order).
+    document order). cookie-consent.js and calendly.js's calendlyInlineGate
+    component follow the same rule.
   {% endcomment %}
+  <script src="{% static 'js/cookie-consent.js' %}" defer></script>
+  {% comment %}
+    Slot for a page that needs its own script registered before Alpine
+    starts (alpine:init ordering, same reason as popup.js below) — used by
+    demo.html to load calendly.js here instead of via {% block extra_body %},
+    which runs after the Alpine CDN script and would lose that race for its
+    calendlyInlineGate component. Pages that only use calendly.js's plain
+    window.openCalendlyPopup() (not an Alpine component) don't need this and
+    keep loading it later, per-page, so it's never fetched on a page with no
+    scheduling entry point — see tests/test_calendly.py.
+  {% endcomment %}
+  {% block pre_alpine_scripts %}{% endblock %}
   <script src="{% static 'js/popup.js' %}" defer></script>
   <script src="{% static 'js/hero-stack.js' %}" defer></script>
   <script src="{% static 'js/case-study-carousel.js' %}" defer></script>

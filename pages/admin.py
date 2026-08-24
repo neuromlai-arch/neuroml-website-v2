@@ -1,8 +1,38 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
 from core.admin import SEO_FIELDSET
-from pages.models import HomePage, Office, SiteSettings
+from pages.models import AboutPage, Capability, Expectation, HomePage, Office, SiteSettings
+
+
+class CapabilityInline(TabularInline):
+    model = Capability
+    extra = 0
+    fields = ["title", "description", "order"]
+
+
+class ExpectationInline(TabularInline):
+    model = Expectation
+    extra = 0
+    fields = ["title", "description", "order"]
+
+
+@admin.register(AboutPage)
+class AboutPageAdmin(ModelAdmin):
+    fieldsets = [
+        ("Heading", {"fields": ["heading", "intro_paragraph_1", "intro_paragraph_2"]}),
+        ("What we're good at", {"fields": ["capabilities_eyebrow", "capabilities_heading"]}),
+        ("What you should expect", {"fields": ["expectations_eyebrow", "expectations_heading"]}),
+        ("CTA", {"fields": ["cta_heading", "cta_body"]}),
+        SEO_FIELDSET,
+    ]
+    inlines = [CapabilityInline, ExpectationInline]
+
+    def has_add_permission(self, request):
+        return not AboutPage.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(HomePage)

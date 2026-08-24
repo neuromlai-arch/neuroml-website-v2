@@ -65,9 +65,7 @@
       <div class="mt-8 flex flex-wrap items-center gap-x-12 gap-y-6">
         {% for r in recognitions %}
           {% if r.badge %}
-            <a href="{{ r.url|default:'#' }}" class="shrink-0">
-              {% responsive_img r.badge alt=r.name css_class="logo-mono h-10 w-auto brightness-0 invert hover:brightness-100 hover:invert-0" %}
-            </a>
+            {% include "components/recognition_badge.html" with r=r %}
           {% endif %}
         {% endfor %}
       </div>
@@ -162,8 +160,8 @@
             hx-target="#industry-panel"
             hx-swap="innerHTML"
             hx-indicator="#industry-panel"
-            class="rounded-full border bg-white px-4 py-2 text-sm font-semibold transition"
-            :class="active === {{ forloop.counter0 }} ? 'border-accent bg-accent text-white' : 'border-hairline text-ink-body hover:border-ink'"
+            class="rounded-full border px-4 py-2 text-sm font-semibold transition"
+            :class="active === {{ forloop.counter0 }} ? 'border-accent bg-accent text-white' : 'border-hairline bg-white text-ink-body hover:border-ink'"
           >
             {{ entry.industry.name }}
           </button>

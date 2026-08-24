@@ -6,6 +6,10 @@
 (function () {
   var loading = null;
 
+  function hasConsent() {
+    return document.cookie.split("; ").indexOf("cookie_consent=accepted") !== -1;
+  }
+
   function loadCalendlyAssets() {
     if (window.Calendly) return Promise.resolve();
     if (loading) return loading;
@@ -33,6 +37,17 @@
      emit a documented "closed" event. */
   window.openCalendlyPopup = function (url) {
     if (!url) return;
+    if (!hasConsent()) {
+      // Not decided (or rejected) yet — surface the banner and retry once
+      // the visitor accepts, rather than silently doing nothing on click.
+      var retry = function () {
+        window.removeEventListener("cookie-consent:accept", retry);
+        window.openCalendlyPopup(url);
+      };
+      window.addEventListener("cookie-consent:accept", retry);
+      window.dispatchEvent(new CustomEvent("cookie-consent:open"));
+      return;
+    }
     var lastFocused = document.activeElement;
 
     loadCalendlyAssets().then(function () {
@@ -53,4 +68,27 @@
       }, 200);
     });
   };
+
+  /* The demo page's inline embed can't be gated behind a click the way the
+     popup is — it's supposed to just be there. So until consent is given it
+     shows a placeholder with its own "enable" button instead of the
+     Calendly div; loadCalendlyAssets() only runs once accepted, same rule
+     as everything else in this file. Registered on alpine:init for the same
+     race-condition reason as popup.js. */
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("calendlyInlineGate", (url) => ({
+      url,
+      accepted: hasConsent(),
+      init() {
+        if (this.accepted) loadCalendlyAssets();
+        window.addEventListener("cookie-consent:accept", () => {
+          this.accepted = true;
+          loadCalendlyAssets();
+        });
+      },
+      requestConsent() {
+        window.dispatchEvent(new CustomEvent("cookie-consent:open"));
+      },
+    }));
+  });
 })();

@@ -107,6 +107,12 @@
     @apply flex items-center gap-1.5 text-sm text-success;
   }
 
+  /* Eyebrow-style field label — color is set by the caller (white/60 on a
+     dark band, ink-secondary on light) since the same form renders on both. */
+  .form-label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-eyebrow;
+  }
+
   /* Honeypot: off-screen rather than display:none, which bots increasingly
      know to skip. Never in the tab order, never announced to screen readers. */
   .honeypot-field {

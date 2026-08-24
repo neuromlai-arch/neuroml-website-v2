@@ -71,6 +71,61 @@ class HomePage(SingletonModel, SEOFields, TimeStampedModel):
         return "Home page"
 
 
+class AboutPage(SingletonModel, SEOFields, TimeStampedModel):
+    heading = models.CharField(max_length=200)
+    intro_paragraph_1 = models.TextField(blank=True)
+    intro_paragraph_2 = models.TextField(blank=True)
+
+    capabilities_eyebrow = models.CharField(max_length=80, default="What we're good at")
+    capabilities_heading = models.CharField(max_length=160, default="Depth in a few places")
+
+    expectations_eyebrow = models.CharField(max_length=80, default="How we work")
+    expectations_heading = models.CharField(max_length=160, default="What you should expect")
+
+    cta_heading = models.CharField(max_length=160, default="Tell us what's stuck")
+    cta_body = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "about page"
+
+    def __str__(self):
+        return "About page"
+
+
+class Capability(models.Model):
+    """A 'what we're good at' column on the about page."""
+
+    about_page = models.ForeignKey(
+        AboutPage, on_delete=models.CASCADE, related_name="capabilities",
+    )
+    title = models.CharField(max_length=140)
+    description = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title
+
+
+class Expectation(models.Model):
+    """A 'what you should expect' point on the about page."""
+
+    about_page = models.ForeignKey(
+        AboutPage, on_delete=models.CASCADE, related_name="expectations",
+    )
+    title = models.CharField(max_length=140)
+    description = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title
+
+
 class SiteSettings(SingletonModel, TimeStampedModel):
     """Global chrome: logo, contact details, social links, tracking IDs.
 

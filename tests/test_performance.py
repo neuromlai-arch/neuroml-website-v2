@@ -70,7 +70,19 @@ class CaseStudyDetailQueryBudgetTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("seed_demo")
-        cls.slug = CaseStudy.objects.live().first().slug
+        # seed_demo no longer creates TeamMember rows (see its module
+        # docstring), so `author` would otherwise be None here and the
+        # template wouldn't issue the extra author lookup this budget
+        # expects — set one explicitly so the count stays deterministic
+        # regardless of what TeamMember data happens to exist.
+        from people.models import TeamMember
+
+        case_study = CaseStudy.objects.live().first()
+        case_study.author = TeamMember.objects.create(
+            name="Test Author", slug="test-author-perf",
+        )
+        case_study.save(update_fields=["author"])
+        cls.slug = case_study.slug
 
     def test_case_study_detail_query_count(self):
         url = reverse("case_study_detail", kwargs={"slug": self.slug})

@@ -94,6 +94,14 @@ class ContactSubmissionBaseForm(HoneypotForm, forms.ModelForm):
         for name in ("last_name", "phone", "company", "project_stage", "budget_range", "message"):
             if name in self.fields:
                 self.fields[name].required = False
+        if "project_stage" in self.fields:
+            self.fields["project_stage"].choices = (
+                [("", "Select a stage")] + ContactSubmission.ProjectStage.choices
+            )
+        if "budget_range" in self.fields:
+            self.fields["budget_range"].choices = (
+                [("", "Select a range")] + ContactSubmission.BudgetRange.choices
+            )
 
 
 class ContactForm(ContactSubmissionBaseForm):

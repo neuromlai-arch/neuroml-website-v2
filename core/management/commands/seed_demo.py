@@ -7,6 +7,24 @@ get_or_create, so running this twice doesn't duplicate anything. Pass
 Nothing here is real copy — everything is prefixed "[Placeholder]" per
 CLAUDE.md, and every image is a grey generated SVG (core/placeholders.py),
 never a downloaded stock photo.
+
+Deliberately NOT seeded: TeamMember, ClientLogo, Recognition, Office, Tag.
+All five used to be seeded here, until a plain (non---flush) re-run kept
+resurrecting rows someone had deliberately deleted — every _seed_* method
+used get_or_create unconditionally, not just under --flush, so any row
+matching a hardcoded natural key just came right back. Recognition and Tag
+now hold real content too (real partner/award badges; a genuine "Computer
+Vision" category), which made that actively wrong rather than just
+dormant risk. This command now reads whatever real rows already exist for
+these five (`list(Model.objects.all())`) instead of creating its own, and
+degrades gracefully — no author, no tags, no badges — if none exist yet.
+Don't re-add a _seed_* method for any of them; if a fresh dev DB needs
+demo people/logos/badges/offices/tags again, add them by hand or write a
+one-off script, not a get_or_create loop that runs on every invocation.
+
+Everything else in this file is still fabricated placeholder content and is
+safely re-seedable — see CLAUDE.md's "don't invent copy" rule for why it's
+prefixed [TODO]/[Placeholder] rather than looking real.
 """
 
 import random
@@ -22,13 +40,13 @@ from careers.models import JobPosting
 from core.placeholders import set_placeholder
 from insights.models import BlogPost, CaseStudy, Handbook, Metric, Webinar
 from marketing.models import (
-    ClientLogo, ComparisonRow, ComparisonTable, EngagementModel, FAQ,
+    ComparisonRow, ComparisonTable, EngagementModel, FAQ,
     LeadPopup, Partner, PopupStep, ProcessStep, Recognition, Testimonial,
 )
-from pages.models import HomePage, Office, SiteSettings
+from pages.models import HomePage, SiteSettings
 from people.models import TeamMember
 from solutions.models import (
-    HireRole, OrganizationSolution, Product, Service, Technology, UseCase,
+    HireRole, Product, Service, Technology, UseCase,
 )
 from taxonomy.models import Industry, ServiceCluster, Tag
 
@@ -36,12 +54,15 @@ PLACEHOLDER = "[Placeholder]"
 
 FLUSH_MODELS = [
     PopupStep, LeadPopup, FAQ, ComparisonRow, ComparisonTable, EngagementModel,
-    ProcessStep, Recognition, ClientLogo, Testimonial, Partner,
+    ProcessStep, Testimonial, Partner,
     JobPosting, Metric, Webinar, Handbook, CaseStudy, BlogPost,
-    HireRole, Product, OrganizationSolution, UseCase, Technology, Service,
-    Office, TeamMember, Tag, Industry, ServiceCluster,
+    HireRole, Product, UseCase, Technology, Service,
+    Industry, ServiceCluster,
     # SiteSettings/HomePage are singletons — left alone by --flush so the
     # site never briefly has no chrome; they're always get_or_create'd below.
+    # TeamMember, ClientLogo, Recognition, Office, Tag are also deliberately
+    # absent — this command doesn't seed them (see the module docstring), so
+    # --flush must not delete real rows it can't recreate.
 ]
 
 
@@ -72,13 +93,14 @@ class Command(BaseCommand):
 
         industries = self._seed_industries()
         clusters = self._seed_service_clusters()
-        tags = self._seed_tags()
-        team = self._seed_team_members()
+        # Not seeded — see the module docstring. Whatever real rows already
+        # exist get used; an empty list degrades gracefully below.
+        tags = list(Tag.objects.all())
+        team = list(TeamMember.objects.all())
         services = self._seed_services(clusters)
         technologies = self._seed_technologies(services)
         self._seed_use_cases(industries, services)
         self._seed_products(industries)
-        self._seed_org_solutions()
         self._seed_hire_roles(services, technologies)
         case_studies = self._seed_case_studies(industries, services, tags, team)
         self._seed_blog_posts(industries, services, tags, team)
@@ -86,11 +108,9 @@ class Command(BaseCommand):
         self._seed_webinars(team, tags)
         self._seed_testimonials(case_studies)
         self._seed_partners()
-        self._seed_client_logos()
-        recognitions = self._seed_recognitions()
+        recognitions = list(Recognition.objects.all())
         self._seed_process_steps()
         self._seed_engagement_models()
-        self._seed_offices()
         self._seed_comparison_table()
         self._seed_faqs(services)
         self._seed_job_postings()
@@ -140,41 +160,6 @@ class Command(BaseCommand):
                     order=order,
                 ),
             )
-            out.append(obj)
-        return out
-
-    def _seed_tags(self):
-        names = [
-            "LLMOps", "RAG", "Automation", "Computer Vision", "Forecasting",
-            "Data Platform", "Change Management",
-        ]
-        return [Tag.objects.get_or_create(slug=slugify(n), defaults={"name": n})[0] for n in names]
-
-    # --------------------------------------------------------------- people
-
-    def _seed_team_members(self):
-        people = [
-            ("Dana Whitfield", "Managing Partner"),
-            ("Marcus Chen", "Head of Delivery"),
-            ("Priya Ramanathan", "Principal ML Engineer"),
-            ("Sofia Alvarez", "Director of Client Strategy"),
-            ("Tobias Reinhardt", "Head of Data Platform"),
-        ]
-        out = []
-        for i, (name, role) in enumerate(people):
-            slug = slugify(name)
-            obj, created = TeamMember.objects.get_or_create(
-                slug=slug,
-                defaults=dict(
-                    name=name, role=role,
-                    bio=f"{PLACEHOLDER} {name.split()[0]} has spent over a decade building "
-                        f"production AI systems for enterprise clients.",
-                    show_on_about=True, order=i,
-                ),
-            )
-            if created:
-                set_placeholder(obj, "photo", 400, 400, name.split()[0], slug=f"team-{slug}")
-                obj.save()
             out.append(obj)
         return out
 
@@ -273,30 +258,117 @@ class Command(BaseCommand):
         return out
 
     def _seed_use_cases(self, industries, services):
-        """24 total: 4 per industry, 8 flagged show_on_homepage."""
-        titles_per_industry = [
-            "Demand Forecasting Agent", "Automated Order Triage",
-            "Intelligent Document Extraction", "Customer Support Copilot",
+        """24 total: 4 per industry, all show_on_homepage=True.
+
+        Real launch copy, one list per industry in the same order
+        `_seed_industries` creates them — iGaming & Sweepstakes, E-commerce &
+        Retail, Fintech, Healthcare, Logistics & Supply Chain, SaaS &
+        Startups. Body stays [TODO]; only title/summary are real."""
+        use_cases_by_industry = [
+            [  # iGaming & Sweepstakes
+                ("Real-time fraud and bonus abuse detection",
+                 "Pattern detection across deposits, bets and withdrawals to flag "
+                 "bonus abuse and collusion before payout rather than after."),
+                ("Player risk and responsible gaming signals",
+                 "Behavioural models surfacing session-length, chasing and "
+                 "deposit-escalation patterns to the operator's responsible "
+                 "gaming workflow."),
+                ("Automated KYC document processing",
+                 "OCR and extraction over identity documents with confidence "
+                 "scoring and human escalation on anything ambiguous."),
+                ("Support automation grounded in policy",
+                 "Retrieval over your actual terms, bonus rules and withdrawal "
+                 "policies, so answers cite the policy rather than approximate it."),
+            ],
+            [  # E-commerce & Retail
+                ("Catalogue enrichment at scale",
+                 "Generating structured attributes, descriptions and "
+                 "categorisation across large catalogues from supplier data and "
+                 "images."),
+                ("Search that understands intent",
+                 "Hybrid semantic and keyword search so a query for 'waterproof "
+                 "jacket for hiking' returns the right products, not the ones "
+                 "matching most words."),
+                ("Returns and support triage",
+                 "Automated classification and routing of support contacts, with "
+                 "policy-grounded responses for the routine majority."),
+                ("Demand and stock forecasting",
+                 "Forecasting models over sales history, seasonality and "
+                 "supplier lead times, with drift monitoring as patterns shift."),
+            ],
+            [  # Fintech
+                ("Document intelligence for onboarding",
+                 "Extraction from statements, filings and identity documents "
+                 "with confidence thresholds and audit trails."),
+                ("Transaction categorisation and enrichment",
+                 "Classifying transaction streams into usable categories with "
+                 "merchant enrichment and correction feedback loops."),
+                ("Compliance monitoring and alerting",
+                 "Pattern detection over transaction data with explainable "
+                 "flags, built so a compliance officer can see why something "
+                 "fired."),
+                ("Customer support grounded in regulation",
+                 "Retrieval systems that answer from your actual regulatory "
+                 "position rather than generating plausible-sounding guidance."),
+            ],
+            [  # Healthcare
+                ("Clinical document processing",
+                 "Extraction and structuring from referrals, notes and reports, "
+                 "with human review on anything below confidence threshold."),
+                ("Patient communication automation",
+                 "Appointment, reminder and follow-up workflows with escalation "
+                 "paths to clinical staff."),
+                ("Medical imaging support",
+                 "Computer vision assisting review workflows, with accuracy "
+                 "characterised by condition rather than reported as a single "
+                 "number."),
+                ("Knowledge retrieval for clinicians",
+                 "Search across guidelines, protocols and internal policy that "
+                 "cites sources and declines when uncertain."),
+            ],
+            [  # Logistics & Supply Chain
+                ("Document automation across the chain",
+                 "Extraction from bills of lading, customs forms and invoices, "
+                 "handling the malformed and scanned reality of the paperwork."),
+                ("Route and load optimisation",
+                 "Optimisation over real constraints — vehicle capacity, driver "
+                 "hours, delivery windows — rather than idealised ones."),
+                ("Exception detection and triage",
+                 "Detecting delays, mismatches and anomalies across tracking "
+                 "data, and routing them to whoever can act."),
+                ("Warehouse computer vision",
+                 "Counting, condition checking and inventory verification from "
+                 "existing camera infrastructure."),
+            ],
+            [  # SaaS & Startups
+                ("AI features in your product",
+                 "Building the AI feature your roadmap needs, with the cost "
+                 "model and evaluation to run it at scale."),
+                ("Retrieval over your own documentation",
+                 "Support and onboarding assistants grounded in your real "
+                 "docs, with citations users can check."),
+                ("Usage analysis and churn signals",
+                 "Models over product telemetry surfacing the behaviour that "
+                 "precedes churn, with the caveats stated honestly."),
+                ("Internal tooling agents",
+                 "Agents handling triage, research and routine operations "
+                 "against your internal systems."),
+            ],
         ]
-        homepage_flags = 0
+
         order = 0
-        for industry in industries:
-            for i, base_title in enumerate(titles_per_industry):
-                title = f"{base_title} for {industry.name.split(' &')[0]}"
+        for industry, use_cases in zip(industries, use_cases_by_industry):
+            for i, (title, summary) in enumerate(use_cases, start=1):
                 slug = slugify(title)
-                show_on_homepage = homepage_flags < 8 and i < 2
-                if show_on_homepage:
-                    homepage_flags += 1
                 obj, created = UseCase.objects.get_or_create(
                     slug=slug,
                     defaults=dict(
                         industry=industry,
                         related_service=services[order % len(services)],
                         title=title,
-                        summary=f"{PLACEHOLDER} How {base_title.lower()} works in "
-                                f"{industry.name.lower()}.",
-                        body=f"<p>{PLACEHOLDER} Full body copy for {title}.</p>",
-                        show_on_homepage=show_on_homepage, order=i,
+                        summary=summary,
+                        body=f"<p>[TODO] Full body copy for {title}.</p>",
+                        show_on_homepage=True, order=i,
                         status=UseCase.Status.PUBLISHED, published_at=days_ago(15),
                     ),
                 )
@@ -328,22 +400,6 @@ class Command(BaseCommand):
                 set_placeholder(obj, "card_image", 800, 600, title, slug=f"product-{slug}-card")
                 set_placeholder(obj, "hero_image", 1200, 675, title, slug=f"product-{slug}-hero")
                 obj.save()
-
-    def _seed_org_solutions(self):
-        entries = [
-            (OrganizationSolution.OrgType.ENTERPRISE, "For Enterprise"),
-            (OrganizationSolution.OrgType.SMB, "For Growing Teams"),
-            (OrganizationSolution.OrgType.STARTUP, "For Startups"),
-        ]
-        for i, (org_type, title) in enumerate(entries):
-            OrganizationSolution.objects.get_or_create(
-                org_type=org_type,
-                title=title,
-                defaults=dict(
-                    tagline=f"{PLACEHOLDER} Pitch for {title.lower()}.",
-                    order=i,
-                ),
-            )
 
     def _seed_hire_roles(self, services, technologies):
         roles = [
@@ -394,7 +450,7 @@ class Command(BaseCommand):
                     challenge=f"<p>{PLACEHOLDER} What the client was up against.</p>",
                     approach=f"<p>{PLACEHOLDER} What we built and why.</p>",
                     outcome=f"<p>{PLACEHOLDER} What changed as a result.</p>",
-                    author=team[i % len(team)],
+                    author=team[i % len(team)] if team else None,
                     featured=(i < 3),
                     status=CaseStudy.Status.PUBLISHED, published_at=days_ago(40 - i * 5),
                 ),
@@ -436,7 +492,7 @@ class Command(BaseCommand):
                     title=title,
                     excerpt=f"{PLACEHOLDER} Excerpt for {title}.",
                     body=f"<p>{PLACEHOLDER} Full body for {title}.</p>",
-                    author=team[i % len(team)],
+                    author=team[i % len(team)] if team else None,
                     reading_minutes=4 + i,
                     featured=(i < 2),
                     status=BlogPost.Status.PUBLISHED, published_at=days_ago(i * 6 + 2),
@@ -445,7 +501,7 @@ class Command(BaseCommand):
             if created:
                 obj.industries.set(random.sample(industries, k=2))
                 obj.related_services.set(random.sample(services, k=2))
-                obj.tags.set(random.sample(tags, k=2))
+                obj.tags.set(random.sample(tags, k=min(2, len(tags))))
                 set_placeholder(obj, "hero_image", 1200, 675, title, slug=f"blog-{slug}-hero")
                 obj.hero_alt = title
                 obj.save()
@@ -463,14 +519,14 @@ class Command(BaseCommand):
                     title=title,
                     excerpt=f"{PLACEHOLDER} Excerpt for {title}.",
                     body=f"<p>{PLACEHOLDER} Full body for {title}.</p>",
-                    author=team[i % len(team)],
+                    author=team[i % len(team)] if team else None,
                     page_count=24 + i * 8,
                     gated=gated,
                     status=Handbook.Status.PUBLISHED, published_at=days_ago(i * 10 + 5),
                 ),
             )
             if created:
-                obj.tags.set(random.sample(tags, k=2))
+                obj.tags.set(random.sample(tags, k=min(2, len(tags))))
                 set_placeholder(obj, "hero_image", 1200, 675, title, slug=f"handbook-{slug}-hero")
                 set_placeholder(obj, "cover_image", 600, 800, title, slug=f"handbook-{slug}-cover")
                 obj.hero_alt = title
@@ -495,7 +551,7 @@ class Command(BaseCommand):
                     title=title,
                     excerpt=f"{PLACEHOLDER} Excerpt for {title}.",
                     body=f"<p>{PLACEHOLDER} Full body for {title}.</p>",
-                    author=team[i % len(team)],
+                    author=team[i % len(team)] if team else None,
                     starts_at=starts_at,
                     duration_minutes=45,
                     guest_presenters=f"{PLACEHOLDER} Guest Speaker",
@@ -505,8 +561,9 @@ class Command(BaseCommand):
                 ),
             )
             if created:
-                obj.presenters.set([team[i % len(team)]])
-                obj.tags.set(random.sample(tags, k=2))
+                if team:
+                    obj.presenters.set([team[i % len(team)]])
+                obj.tags.set(random.sample(tags, k=min(2, len(tags))))
                 set_placeholder(obj, "hero_image", 1200, 675, title, slug=f"webinar-{slug}-hero")
                 obj.hero_alt = title
                 obj.save()
@@ -551,35 +608,6 @@ class Command(BaseCommand):
                 set_placeholder(obj, "logo", 160, 80, name, slug=f"partner-{slugify(name)}")
                 obj.save()
 
-    def _seed_client_logos(self):
-        names = [
-            "Northwind Retail", "Meridian Logistics", "Union Financial", "Beacon Health",
-            "Forge Manufacturing", "Atlas Consulting", "Vertex Industrial", "Solstice Group",
-        ]
-        for i, name in enumerate(names):
-            obj, created = ClientLogo.objects.get_or_create(
-                name=name, defaults=dict(order=i, active=True),
-            )
-            if created:
-                set_placeholder(obj, "logo", 160, 60, name, slug=f"client-{slugify(name)}")
-                obj.save()
-
-    def _seed_recognitions(self):
-        names = [
-            "Clutch Top AI Firm 2025", "Inc. 5000", "AWS Advanced Partner",
-            "Forbes Tech Council", "G2 Leader — AI Consulting",
-        ]
-        out = []
-        for i, name in enumerate(names):
-            obj, created = Recognition.objects.get_or_create(
-                name=name, defaults=dict(order=i),
-            )
-            if created:
-                set_placeholder(obj, "badge", 140, 60, name.split()[0], slug=f"recognition-{slugify(name)}")
-                obj.save()
-            out.append(obj)
-        return out
-
     def _seed_process_steps(self):
         steps = [
             ("Discovery", f"{PLACEHOLDER} Scope the problem and the data."),
@@ -609,28 +637,6 @@ class Command(BaseCommand):
             )
             if created:
                 set_placeholder(obj, "icon", 64, 64, str(i + 1), slug=f"engagement-{slugify(title)}")
-                obj.save()
-
-    def _seed_offices(self):
-        offices = [
-            ("San Francisco", "United States", True),
-            ("London", "United Kingdom", False),
-        ]
-        for i, (city, country, hq) in enumerate(offices):
-            obj, created = Office.objects.get_or_create(
-                city=city,
-                defaults=dict(
-                    country=country,
-                    address=f"{PLACEHOLDER} 100 Market Street, {city}",
-                    phone="+1 555 0100" if hq else "+44 20 5550 0100",
-                    email="hello@example.com",
-                    is_headquarters=hq,
-                    map_url="https://maps.example.com",
-                    order=i,
-                ),
-            )
-            if created:
-                set_placeholder(obj, "image", 800, 600, city, slug=f"office-{slugify(city)}")
                 obj.save()
 
     def _seed_comparison_table(self):

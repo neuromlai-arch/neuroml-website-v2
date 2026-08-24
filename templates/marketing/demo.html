@@ -1,7 +1,23 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block pre_alpine_scripts %}
+  {% if calendly_url %}
+    {% comment %}
+      calendlyInlineGate below is an Alpine component, so calendly.js has
+      to register it before Alpine starts — this slot (see base.html) runs
+      before the Alpine CDN script; {% block extra_body %} would run after
+      it and lose that race, same reasoning as popup.js.
+    {% endcomment %}
+    <script src="{% static 'js/calendly.js' %}" defer></script>
+  {% endif %}
+{% endblock %}
 
 {% block extra_head %}
   {% if calendly_url %}
+    {% comment %} Stylesheet only — no cookies, so it's not gated. The
+      script that actually creates the embed and sets cookies loads lazily
+      via calendly.js, only once cookie consent is accepted. {% endcomment %}
     <link rel="stylesheet" href="https://assets.calendly.com/assets/external/widget.css">
   {% endif %}
 {% endblock %}
@@ -20,8 +36,16 @@
     </div>
 
     {% if calendly_url %}
-      <div class="reveal mt-14 card overflow-hidden">
-        <div class="calendly-inline-widget" data-url="{{ calendly_url }}" style="min-width:320px;height:700px;"></div>
+      <div class="reveal mt-14 card overflow-hidden" x-data="calendlyInlineGate('{{ calendly_url|escapejs }}')">
+        <template x-if="!accepted">
+          <div class="flex flex-col items-center gap-4 p-10 text-center">
+            <p class="max-w-sm text-sm text-ink-secondary">Scheduling runs on Calendly, which sets its own cookies. Accept cookies to load the scheduler here, or use the form below instead.</p>
+            <button type="button" @click="requestConsent()" class="rounded-full border border-ink px-6 py-2 text-sm font-semibold text-ink transition hover:bg-ink hover:text-white">
+              Enable scheduler
+            </button>
+          </div>
+        </template>
+        <div x-show="accepted" x-cloak class="calendly-inline-widget" data-url="{{ calendly_url }}" style="min-width:320px;height:700px;"></div>
       </div>
     {% endif %}
 
@@ -34,10 +58,4 @@
     </div>
   </div>
 </section>
-{% endblock %}
-
-{% block extra_body %}
-  {% if calendly_url %}
-    <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
-  {% endif %}
 {% endblock %}

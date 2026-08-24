@@ -1,0 +1,9 @@
+{% load imaging %}
+{% comment %}
+Recognition badges render in their own colours — no invert treatment. Most
+are designed for a light background, so each sits on a white card rather
+than directly on the dark band.
+{% endcomment %}
+<a href="{{ r.url|default:'#' }}" class="inline-flex shrink-0 items-center justify-center rounded-lg bg-white p-3">
+  {% responsive_img r.badge alt=r.name css_class="h-12 w-auto" %}
+</a>

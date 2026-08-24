@@ -84,7 +84,9 @@ class StaticViewSitemap(Sitemap):
     priority = 0.9
 
     def items(self):
-        return ["home", "about", "contact", "privacy", "terms", "demo", "job_posting_list"]
+        # "privacy"/"terms" excluded — both 404 (pages/views.py) until real
+        # legal copy exists. Add them back here once they're restored.
+        return ["home", "about", "contact", "demo", "job_posting_list"]
 
     def location(self, item):
         return reverse(item)

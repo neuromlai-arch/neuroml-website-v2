@@ -4,7 +4,7 @@ Usage: {% include "components/breadcrumbs.html" with items=breadcrumbs %}
 page last with url=None. Emits both the visible trail and matching
 BreadcrumbList JSON-LD.
 {% endcomment %}
-<nav aria-label="Breadcrumb" class="border-b border-hairline bg-white">
+<nav aria-label="Breadcrumb" class="mt-20 border-b border-hairline bg-white lg:mt-28">
   <ol class="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-6 py-4 text-xs text-ink-secondary lg:px-8">
     {% for item in items %}
       <li class="flex items-center gap-2">

@@ -1,10 +1,14 @@
 """Every scheduling entry point (demo page inline widget, case study detail
 button, contact/lead-popup success-state button) checks
 SiteSettings.calendly_url and renders nothing when it's blank. Calendly's
-own ~100KB embed script must never appear in the initial HTML of a page
-with no scheduling entry point — it's fetched by static/js/calendly.js on
-first click instead, and the demo page's inline widget is the one
-documented exception that loads eagerly with that page."""
+own ~100KB embed script must never appear in the initial HTML of any page —
+it's fetched by static/js/calendly.js only once cookie consent is accepted
+(see static/js/cookie-consent.js and tests in this file's TestCase for the
+demo page's placeholder-until-accepted behaviour). The demo page loads our
+own calendly.js eagerly (via base.html's pre_alpine_scripts block) since its
+inline widget needs the calendlyInlineGate Alpine component regardless of
+consent state, but that's still just our lazy-loader, never Calendly's own
+widget.js."""
 
 from django.core.cache import cache
 from django.core.management import call_command
@@ -39,13 +43,23 @@ class CalendlyEntryPointTests(TestCase):
         response = self.client.get(reverse("demo"))
         self.assertNotContains(response, "calendly-inline-widget")
         self.assertNotContains(response, CALENDLY_ASSET)
+        self.assertNotContains(response, "js/calendly.js")
 
     def test_demo_page_widget_present_when_calendly_url_set(self):
         self._set_calendly_url("https://calendly.com/business-neuroml/30min")
         response = self.client.get(reverse("demo"))
         self.assertContains(response, "calendly-inline-widget")
         self.assertContains(response, "calendly.com/business-neuroml/30min")
-        self.assertContains(response, CALENDLY_ASSET)
+        self.assertContains(response, "js/calendly.js")
+        self.assertContains(response, "calendlyInlineGate")
+        # The div and our lazy-loader render unconditionally — Calendly's
+        # own widget.js only fetches client-side once consent is accepted.
+        self.assertNotContains(response, CALENDLY_ASSET)
+
+    def test_demo_page_widget_gated_behind_consent_placeholder(self):
+        self._set_calendly_url("https://calendly.com/business-neuroml/30min")
+        response = self.client.get(reverse("demo"))
+        self.assertContains(response, "Enable scheduler")
 
     # ------------------------------------------------------- case study page
 

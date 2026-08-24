@@ -1,0 +1,29 @@
+{% comment %}
+Owned consent banner — no third-party CMP. Gates GTM (base.html) and the
+Calendly embed (static/js/calendly.js) behind the "accepted" choice. Only
+included from base.html when there's actually something to gate:
+site_settings.gtm_container_id or site_settings.calendly_url.
+{% endcomment %}
+<div
+  x-data="cookieConsent"
+  x-show="visible"
+  x-cloak
+  @keydown.escape.window="dismiss()"
+  class="fixed inset-x-0 bottom-0 z-[80] border-t border-hairline bg-white px-6 py-5 lg:px-8"
+  role="region"
+  aria-label="Cookie consent"
+>
+  <div class="mx-auto flex max-w-7xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <p class="max-w-2xl text-sm text-ink-body">
+      We use cookies for analytics (Google Tag Manager) and to load our scheduling widget (Calendly). Both stay off until you accept.
+    </p>
+    <div class="flex shrink-0 gap-3">
+      <button type="button" @click="reject()" class="rounded-full border border-ink px-6 py-2 text-sm font-semibold text-ink transition hover:bg-ink hover:text-white">
+        Reject
+      </button>
+      <button type="button" @click="accept()" class="rounded-full bg-ink px-6 py-2 text-sm font-semibold text-white transition hover:bg-ink/90">
+        Accept
+      </button>
+    </div>
+  </div>
+</div>

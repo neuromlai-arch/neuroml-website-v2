@@ -123,20 +123,72 @@ been down for more than ~15 minutes reports unhealthy.
   `# Reserved`) so editors can no longer fill in a value that does nothing.
   Wire up real verification before re-exposing it.
 
-## Privacy — Calendly sets third-party cookies
+## Cookie consent — RESOLVED: GTM and Calendly are gated
 
 `SiteSettings.calendly_url` (see `core/calendly.py`, `static/js/calendly.js`)
 lazy-loads Calendly's own embed script on first use — the demo page's inline
-widget, and any "Book a call" popup button. Calendly's embed sets its own
-third-party cookies once loaded, outside this app's control.
+widget, and any "Book a call" popup button. GTM (`SiteSettings.gtm_container_id`)
+loads its own third-party script too. Both used to load unconditionally.
 
-**No cookie consent mechanism exists in this codebase yet.** If EU traffic is
-expected, a consent banner is needed before launch, and the Calendly embed
-(script load, inline widget, and every popup button) should be gated behind
-consent once one exists — right now every scheduling entry point loads
-Calendly the moment a visitor interacts with it, unconditionally. Not building
-that banner now; flagging it as a pre-launch dependency if `calendly_url` is
-set and EU visitors are in scope.
+**A minimal, owned consent banner now gates both** — no third-party CMP.
+One cookie (`cookie_consent` = `accepted` | `rejected`), set client-side:
+
+- `static/js/cookie-consent.js` — the banner's Alpine component
+  (`templates/components/_cookie_consent_banner.html`, included in
+  `base.html` right after the skip-link so it's an early keyboard tab stop,
+  `fixed bottom-0` regardless of DOM position). Escape hides it for that
+  visit without recording a choice (returns next load) rather than trapping
+  keyboard users; Accept/Reject are plain focusable `<button>`s. GTM only
+  loads (`loadGTM()`) once `accepted`; `base.html`'s head script only ever
+  stages `window.GTM_CONTAINER_ID`, never the loader itself, and there's no
+  `<noscript>` fallback — a no-JS visitor can't run the banner either, so no
+  tracking is the correct default for them, not an unconditional tag.
+- `static/js/calendly.js` — `window.openCalendlyPopup()` checks consent
+  before fetching Calendly's assets; if not yet accepted, it reopens the
+  banner and retries automatically once the visitor accepts, rather than
+  silently doing nothing on click. The demo page's inline widget
+  (`calendlyInlineGate` Alpine component, same file) shows an
+  "Enable scheduler" placeholder instead of the embed until accepted.
+- Only rendered at all when there's something to gate: `base.html` includes
+  the banner behind `{% if site_settings.gtm_container_id or
+  site_settings.calendly_url %}`.
+
+Tests: `tests/test_gtm.py`, `tests/test_calendly.py`. No Django test can
+exercise the client-side gating itself (cookie read/write, retry-after-accept)
+— that was verified manually via Playwright against the running dev server
+before this was marked resolved.
+
+## Privacy and Terms pages are unpublished — real copy needed before launch
+
+Both are still `[TODO]` copy (`templates/pages/privacy.html`,
+`templates/pages/terms.html`) and the site collects personal data through
+five forms (contact, demo, popup, handbook gate, job application) — a
+placeholder legal policy must not be linkable. `pages/views.py`'s `privacy()`
+and `terms()` now `raise Http404` unconditionally instead of rendering.
+
+**Every place that referenced them, so this can be restored cleanly:**
+
+- `pages/views.py` — `privacy()`/`terms()` raise `Http404`. Restore: replace
+  with the original `render(request, "pages/<name>.html", context)` call
+  (kept in a comment on each view).
+- `templates/base.html` — footer "Privacy"/"Terms" links removed entirely
+  (the wrapping `<div>` and the copyright row's `flex justify-between`
+  layout were adjusted since it's now just the copyright line — restore
+  both the links and that layout together, not just the `<a>` tags).
+- `config/sitemaps.py` — `StaticViewSitemap.items()` no longer lists
+  `"privacy"`/`"terms"` (a 404'd URL must not appear in the sitemap).
+- `tests/test_smoke.py` — moved from `SIMPLE_GET_URLS` (expects 200) to a
+  new `UNPUBLISHED_GET_URLS` list (pinned to 404), so a future change can't
+  silently re-expose a placeholder policy without a test failing.
+- `pages/urls.py` — routes are untouched (`privacy/`, `terms/` still
+  resolve, just to a 404 view) — nothing to restore there.
+- `templates/pages/privacy.html` / `terms.html` — untouched, still `[TODO]`,
+  ready to receive real copy whenever it lands.
+
+**To restore:** write the real copy into both templates, revert the two
+views to `render(...)`, re-add the footer links and sitemap entries, and
+move the two names back from `UNPUBLISHED_GET_URLS` to `SIMPLE_GET_URLS` in
+`tests/test_smoke.py`.
 
 ## Must exist externally before first deploy
 
@@ -161,7 +213,7 @@ set and EU visitors are in scope.
   CLAUDE.md's SEO section. Not itself infrastructure, but blocking for
   launch and easy to forget.
 - If GTM/reCAPTCHA get wired up per the decision above: a **GTM container**
-  and **reCAPTCHA site/secret key pair**.
-- If `calendly_url` is set and EU traffic is expected: a **cookie consent
-  banner**, with the Calendly embed gated behind it — see the Privacy section
-  above. Not built yet.
+  and **reCAPTCHA site/secret key pair**. Consent gating is already built —
+  see the cookie consent section above.
+- **Real Privacy/Terms copy**, before re-enabling those pages — see the
+  section above for the full restore list.
