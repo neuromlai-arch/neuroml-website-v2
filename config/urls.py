@@ -7,7 +7,7 @@ from config.sitemaps import sitemaps
 from core.views import health, robots_txt, worker_health
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("manage/", admin.site.urls),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("healthz/", health, name="health"),
     path("healthz/worker/", worker_health, name="worker_health"),

@@ -39,9 +39,19 @@ def downscale_in_place(image_field_file, max_width=MAX_ORIGINAL_WIDTH):
         img.load()
     except Exception:
         return
+    finally:
+        # Rewind rather than close: for a freshly uploaded file that hasn't
+        # been committed to storage yet, Model.save() still needs to read
+        # this same stream from the start immediately after we return, to
+        # write it to storage. Closing it here (as this used to do) freed
+        # the underlying buffer and made that later read raise "I/O
+        # operation on closed file".
+        try:
+            image_field_file.seek(0)
+        except Exception:
+            pass
 
     if img.width <= max_width:
-        image_field_file.close()
         return
 
     ratio = max_width / img.width
@@ -59,7 +69,6 @@ def downscale_in_place(image_field_file, max_width=MAX_ORIGINAL_WIDTH):
     resized.save(buffer, format=fmt, **save_kwargs)
     buffer.seek(0)
 
-    image_field_file.close()
     filename = name.rsplit("/", 1)[-1]
     image_field_file.save(filename, ContentFile(buffer.read()), save=False)
 

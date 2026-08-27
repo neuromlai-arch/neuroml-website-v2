@@ -72,7 +72,7 @@ set of project conventions — read it before making changes.
    python manage.py runserver
    ```
 
-   Visit `/` for the site, `/admin/` for the CMS.
+   Visit `/` for the site, `/manage/` for the CMS.
 
 8. **(Optional) run the async email worker** so queued notification/newsletter
    emails actually send (to the console in dev, since `EMAIL_BACKEND` there is
@@ -99,7 +99,7 @@ are covered directly in `core/tests.py`.
 
 ## Adding content
 
-Everything a content editor touches lives in `/admin/`, not in a template or
+Everything a content editor touches lives in `/manage/`, not in a template or
 a migration. A few things worth knowing before you start:
 
 - **Draft → In review → Published** is the workflow on every content type.
@@ -164,6 +164,10 @@ prod settings, the test suite, and a build of the image on every push and PR.
 Before going live: fill in every `AWS_S3_*` var, set `DJANGO_SETTINGS_MODULE=
 config.settings.prod`, and run `python manage.py check --deploy` against
 those settings — it's clean today, but re-run it after any settings change.
+
+For an actual deploy to AWS EC2 — server setup, Docker Compose, Nginx/TLS,
+the deploy script, CI's `deploy` job, DNS, and the cutover checklist — see
+`deploy/` and DEPLOY.md's "Deploying to EC2" section.
 
 ## What's still a placeholder
 

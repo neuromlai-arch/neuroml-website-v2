@@ -1,15 +1,19 @@
+import shutil
+import tempfile
 import uuid
 from datetime import timedelta
-from io import StringIO
+from io import BytesIO, StringIO
 
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from core.models import Redirect
-from insights.models import BlogPost
+from insights.models import BlogPost, CaseStudy
 from taxonomy.models import ServiceCluster
 from solutions.models import Service
 
@@ -168,3 +172,213 @@ class WorkerHealthTests(TestCase):
         out = StringIO()
         call_command("check_worker_health", stdout=out)
         self.assertIn("healthy", out.getvalue())
+
+
+class AttachCaseStudyImagesCommandTests(TestCase):
+    """core/management/commands/attach_case_study_images.py — the guard that
+    keeps a real client screenshot from ever landing on an anonymised case
+    study, and the --include-anonymous escape hatch for generic source
+    images that don't identify anyone."""
+
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        self.override = override_settings(MEDIA_ROOT=self.media_root)
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+
+        self.source = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.source, ignore_errors=True)
+
+    def _write_png(self, directory, filename):
+        from pathlib import Path
+
+        from PIL import Image
+
+        buf = BytesIO()
+        Image.new("RGB", (10, 10), color="white").save(buf, format="PNG")
+
+        target = Path(directory) / filename
+        target.write_bytes(buf.getvalue())
+        return target
+
+    def _make_case_study(self, slug, **overrides):
+        defaults = dict(title=slug.replace("-", " ").title(), slug=slug)
+        defaults.update(overrides)
+        return CaseStudy.objects.create(**defaults)
+
+    def test_anonymous_case_study_skipped_by_default(self):
+        self._make_case_study("clinical-ai-agents", client_anonymous=True)
+        self._write_png(self.source, "clinical-ai-agents.png")
+
+        call_command("attach_case_study_images", source=self.source)
+
+        case_study = CaseStudy.objects.get(slug="clinical-ai-agents")
+        self.assertFalse(case_study.hero_image)
+
+    def test_include_anonymous_flag_attaches_image(self):
+        self._make_case_study("clinical-ai-agents", client_anonymous=True)
+        self._write_png(self.source, "clinical-ai-agents.png")
+
+        call_command(
+            "attach_case_study_images", source=self.source, include_anonymous=True,
+        )
+
+        case_study = CaseStudy.objects.get(slug="clinical-ai-agents")
+        self.assertTrue(case_study.hero_image)
+
+    def test_include_anonymous_flag_never_touches_a_named_client(self):
+        # The flag lifts the anonymous guard, but a named client's case
+        # study never fell under that guard in the first place — it should
+        # behave identically with or without the flag.
+        self._make_case_study(
+            "medical-practice-organic-growth",
+            client_anonymous=False, client_name="Carpal Tunnel Pros",
+        )
+        self._write_png(self.source, "medical-practice-organic-growth.png")
+
+        call_command(
+            "attach_case_study_images", source=self.source, include_anonymous=True,
+        )
+
+        case_study = CaseStudy.objects.get(slug="medical-practice-organic-growth")
+        self.assertTrue(case_study.hero_image)
+
+    def test_include_anonymous_flag_does_not_override_existing_hero_image(self):
+        case_study = self._make_case_study("clinical-ai-agents", client_anonymous=True)
+        existing = self._write_png(self.source, "existing.png")
+        with existing.open("rb") as fh:
+            from django.core.files import File
+
+            case_study.hero_image.save("existing.png", File(fh), save=True)
+
+        self._write_png(self.source, "clinical-ai-agents.png")
+        call_command(
+            "attach_case_study_images", source=self.source, include_anonymous=True,
+        )
+
+        case_study.refresh_from_db()
+        self.assertIn("existing", case_study.hero_image.name)
+
+
+class CaseStudyAdminHeroImageUploadTests(TestCase):
+    """core/images.py's downscale_in_place() — called from CaseStudy.save()
+    on every save, not just via the attach_case_study_images command. The
+    admin's add/change view assigns the raw, not-yet-committed
+    InMemoryUploadedFile straight to hero_image before instance.save() runs,
+    so this exercises a real multipart POST rather than an already-saved
+    FieldFile, which is the only way this bug reproduces."""
+
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        self.override = override_settings(MEDIA_ROOT=self.media_root)
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+
+        User = get_user_model()
+        self.admin_user = User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="password",
+        )
+        self.client.force_login(self.admin_user)
+
+    def _upload(self, width=800, height=600):
+        from PIL import Image
+
+        buf = BytesIO()
+        Image.new("RGB", (width, height), color="white").save(buf, format="JPEG")
+        return SimpleUploadedFile(
+            "hero.jpg", buf.getvalue(), content_type="image/jpeg",
+        )
+
+    def _post_data(self, **overrides):
+        data = {
+            "title": "New Case Study", "slug": "new-case-study",
+            "status": CaseStudy.Status.DRAFT,
+            "metrics-TOTAL_FORMS": "0", "metrics-INITIAL_FORMS": "0",
+            "metrics-MIN_NUM_FORMS": "0", "metrics-MAX_NUM_FORMS": "1000",
+            "testimonials-TOTAL_FORMS": "0", "testimonials-INITIAL_FORMS": "0",
+            "testimonials-MIN_NUM_FORMS": "0", "testimonials-MAX_NUM_FORMS": "1000",
+        }
+        data.update(overrides)
+        return data
+
+    def test_uploading_a_hero_image_under_the_width_cap_saves_without_error(self):
+        # This is the common case — most uploads are already under
+        # MAX_ORIGINAL_WIDTH — and the one that previously raised
+        # ValueError: I/O operation on closed file.
+        response = self.client.post(
+            reverse("admin:insights_casestudy_add"),
+            data=self._post_data(hero_image=self._upload(width=800, height=600)),
+        )
+        self.assertEqual(response.status_code, 302, response.content)
+
+        case_study = CaseStudy.objects.get(slug="new-case-study")
+        self.assertTrue(case_study.hero_image)
+
+    def test_uploading_a_hero_image_over_the_width_cap_is_downscaled(self):
+        response = self.client.post(
+            reverse("admin:insights_casestudy_add"),
+            data=self._post_data(
+                slug="wide-case-study", hero_image=self._upload(width=2000, height=1000),
+            ),
+        )
+        self.assertEqual(response.status_code, 302, response.content)
+
+        case_study = CaseStudy.objects.get(slug="wide-case-study")
+        self.assertTrue(case_study.hero_image)
+        from PIL import Image
+
+        with case_study.hero_image.open("rb") as fh:
+            img = Image.open(fh)
+            self.assertLessEqual(img.width, 1600)
+
+
+class AdminBruteForceProtectionTests(TestCase):
+    """django-axes on the admin login (config/settings/base.py):
+    AXES_FAILURE_LIMIT=5, AXES_COOLOFF_TIME=30 minutes, keyed on
+    username+IP. Uses reverse("admin:login") rather than a hardcoded path —
+    the admin was moved from /admin/ to /manage/ but the URL *namespace*
+    (set by admin.site.urls itself) is unaffected by where it's mounted."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_superuser(
+            username="axesuser", email="axesuser@example.com", password="a-real-password-123",
+        )
+        self.login_url = reverse("admin:login")
+
+    def test_fifth_failed_attempt_locks_out_further_attempts(self):
+        for _ in range(5):
+            response = self.client.post(
+                self.login_url, {"username": "axesuser", "password": "wrong"},
+            )
+        self.assertEqual(response.status_code, 429)
+
+    def test_locked_out_user_is_blocked_even_with_the_correct_password(self):
+        for _ in range(5):
+            self.client.post(self.login_url, {"username": "axesuser", "password": "wrong"})
+
+        response = self.client.post(
+            self.login_url, {"username": "axesuser", "password": "a-real-password-123"},
+        )
+        self.assertEqual(response.status_code, 429)
+
+    def test_four_failed_attempts_do_not_lock_out(self):
+        for _ in range(4):
+            response = self.client.post(
+                self.login_url, {"username": "axesuser", "password": "wrong"},
+            )
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            self.login_url, {"username": "axesuser", "password": "a-real-password-123"},
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_failed_attempts_are_logged(self):
+        with self.assertLogs("axes", level="INFO") as captured:
+            self.client.post(self.login_url, {"username": "axesuser", "password": "wrong"})
+        self.assertTrue(
+            any("login failure" in message.lower() for message in captured.output),
+        )

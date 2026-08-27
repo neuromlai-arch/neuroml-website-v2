@@ -269,6 +269,57 @@ class HomepageLeadPopupTests(SeedDataMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "popup-heading")
 
+    def test_popup_config_reflects_timing_fields(self):
+        popup = LeadPopup.load()
+        popup.enabled = True
+        popup.delay_seconds = 60
+        popup.frequency_days = 1
+        popup.show_on_mobile = False
+        popup.hide_after_submit_days = 90
+        popup.save()
+
+        html = self.client.get(reverse("home")).content.decode()
+
+        self.assertIn("delaySeconds: 60", html)
+        self.assertIn("frequencyDays: 1", html)
+        self.assertIn("hideAfterSubmitDays: 90", html)
+        self.assertIn("showOnMobile: false", html)
+
+    def test_popup_exclude_paths_cover_contact_and_demo(self):
+        popup = LeadPopup.load()
+        popup.enabled = True
+        popup.exclude_paths = "/contact/\n/book-a-demo/"
+        popup.save()
+
+        # The dialog markup itself still renders on every page (the popup
+        # component reads window.location.pathname client-side) — it's
+        # popup.js's init() that must refuse to arm on an excluded path, so
+        # what we can assert here is that the config handed to it lists
+        # both paths.
+        for path, url_name in (("/contact/", "contact"), ("/book-a-demo/", "demo")):
+            with self.subTest(path=path):
+                html = self.client.get(reverse(url_name)).content.decode()
+                self.assertIn("popup-heading", html)
+                self.assertIn(path, html.split("excludePaths:", 1)[1].split("\n", 1)[0])
+
+    def test_popup_form_fields_have_visible_labels(self):
+        popup = LeadPopup.load()
+        popup.enabled = True
+        popup.save()
+
+        html = self.client.get(reverse("home")).content.decode()
+
+        self.assertIn(">First name*<", html)
+        self.assertIn(">Email*<", html)
+        self.assertIn(">Phone<", html)
+        self.assertIn(">Service<", html)
+        self.assertIn(">Message<", html)
+        self.assertIn("Select a service", html)
+        # Same visible-label treatment as the full contact form, not the
+        # sr-only labels the popup shipped with earlier.
+        self.assertIn('for="id_name" class="form-label', html)
+        self.assertIn('for="id_email" class="form-label', html)
+
 
 class URLTemplateCoverageTests(SeedDataMixin, TestCase):
     """Part 1's two reporting lists, enforced so they can't silently drift."""

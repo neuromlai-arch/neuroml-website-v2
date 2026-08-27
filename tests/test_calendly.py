@@ -156,7 +156,7 @@ class CalendlyEntryPointTests(TestCase):
 
     def test_calendly_url_field_in_contact_fieldset(self):
         self.client.force_login(self._staff_user())
-        response = self.client.get("/admin/pages/sitesettings/1/change/")
+        response = self.client.get("/manage/pages/sitesettings/1/change/")
         self.assertContains(response, "calendly_url")
 
     @staticmethod

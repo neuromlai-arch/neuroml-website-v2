@@ -70,7 +70,7 @@ Don't write any frontend templates in this session beyond a bare base.html
 placeholder. I want the admin working end to end first.
 ```
 
-**Done when:** you can log into `/admin/`, create a case study with metrics
+**Done when:** you can log into `/manage/`, create a case study with metrics
 inline, save it as a draft, and publish it.
 
 ---

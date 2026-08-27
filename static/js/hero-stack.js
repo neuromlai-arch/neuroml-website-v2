@@ -3,10 +3,10 @@
    first card, just static). Registered via Alpine.data() on alpine:init —
    see popup.js for why that matters for script ordering.
 
-   Only the active card and its two flanking neighbours are visually
-   distinct (sharp/centred vs scaled+faded); the rest sit fully
-   transparent behind them so the stack never grows past three visible
-   layers regardless of card count. */
+   Only the active card is fully visible; its two flanking neighbours sit
+   just off to each side (slide + fade), and the rest sit fully transparent
+   behind them so the stack never grows past three visible layers regardless
+   of card count. */
 document.addEventListener("alpine:init", () => {
   Alpine.data("heroStack", (count) => ({
     active: 0,
@@ -49,13 +49,14 @@ document.addEventListener("alpine:init", () => {
     cardClass(i) {
       const diff = this.offset(i);
       if (diff === 0) {
-        return "z-20 scale-100 opacity-100 translate-x-0 rotate-0";
+        return "z-20 scale-100 opacity-100 translate-x-0";
       }
       if (diff === 1 || diff === -1) {
-        const side = diff === 1 ? "translate-x-24 rotate-6" : "-translate-x-24 -rotate-6";
-        return `z-10 scale-[0.6] opacity-40 ${side}`;
+        // Outgoing/incoming neighbour: slides 30px and fades toward 0.
+        const side = diff === 1 ? "translate-x-[30px]" : "-translate-x-[30px]";
+        return `z-10 scale-100 opacity-0 pointer-events-none ${side}`;
       }
-      return "z-0 scale-50 opacity-0 pointer-events-none";
+      return "z-0 scale-100 opacity-0 pointer-events-none translate-x-0";
     },
   }));
 });

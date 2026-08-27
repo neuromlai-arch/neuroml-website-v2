@@ -5,7 +5,11 @@ DEBUG = False
 
 # S3-compatible object storage for media; whitenoise continues to serve static.
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
+# Only needed for an S3-*compatible* provider (R2, Spaces, MinIO, ...) that
+# isn't AWS itself — django-storages derives the real AWS endpoint from
+# AWS_S3_REGION_NAME automatically, so this stays unset for a real AWS S3
+# bucket rather than being a second required var alongside it.
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default=None)
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")

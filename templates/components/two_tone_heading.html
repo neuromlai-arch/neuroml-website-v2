@@ -5,4 +5,4 @@ Signature two-tone headline. Usage:
   </h1>
 Renders each line of `heading` on its own line; the second line is muted.
 {% endcomment %}
-{% for line in heading.splitlines %}<span class="block {% if forloop.counter == 2 %}text-ink-muted{% else %}text-ink{% endif %}">{{ line }}</span>{% endfor %}
+{% for line in heading.splitlines %}<span class="block {% if forloop.counter == 1 %}hero-anim-line1{% elif forloop.counter == 2 %}hero-anim-line2{% endif %} {% if forloop.counter == 2 %}text-ink-muted{% else %}text-ink{% endif %}">{{ line }}</span>{% endfor %}

@@ -2,7 +2,7 @@
 only ever stores the container id server-side, in window.GTM_CONTAINER_ID —
 loading the actual gtm.js loader happens client-side, and only once the
 visitor has accepted the cookie banner. Absent by default so nothing is even
-staged until an editor sets gtm_container_id via /admin/.
+staged until an editor sets gtm_container_id via /manage/.
 
 There's deliberately no <noscript> fallback: a no-JS visitor can't run the
 consent banner either, so the compliant default for them is no tracking at

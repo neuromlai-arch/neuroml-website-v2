@@ -8,12 +8,19 @@ generic descriptor, never a client identifier, and that extends to not
 attaching an image for it even if a placeholder file happens to share its
 slug.
 
+Pass --include-anonymous to override that guard, for cases where the source
+images are generic (e.g. abstract/illustrative cards) and don't identify a
+client. Without the flag, anonymised case studies are always skipped, so a
+real client screenshot can never be attached to an anonymised entry by
+accident.
+
 Never reads from a subdirectory named _verify_before_use — those are
 screenshots of third-party corporate homepages, excluded on purpose.
 
 Usage:
     python manage.py attach_case_study_images --source ~/Downloads/case-study-images
     python manage.py attach_case_study_images --source <dir> --dry-run
+    python manage.py attach_case_study_images --source <dir> --include-anonymous
 """
 
 from pathlib import Path
@@ -38,6 +45,14 @@ class Command(BaseCommand):
             "--dry-run", action="store_true",
             help="Report what would happen without writing anything.",
         )
+        parser.add_argument(
+            "--include-anonymous", action="store_true",
+            help=(
+                "Also attach images to anonymised case studies. Only use this "
+                "with source images that don't identify a client (e.g. generic "
+                "illustrative cards) — never with real screenshots."
+            ),
+        )
 
     def handle(self, *args, **options):
         source = Path(options["source"]).expanduser()
@@ -45,6 +60,7 @@ class Command(BaseCommand):
             raise CommandError(f"Not a directory: {source}")
 
         dry_run = options["dry_run"]
+        include_anonymous = options["include_anonymous"]
 
         attached, skipped_existing, skipped_anonymous, missing = [], [], [], []
 
@@ -53,7 +69,7 @@ class Command(BaseCommand):
                 skipped_existing.append(case_study.slug)
                 continue
 
-            if case_study.client_anonymous:
+            if case_study.client_anonymous and not include_anonymous:
                 skipped_anonymous.append(case_study.slug)
                 continue
 

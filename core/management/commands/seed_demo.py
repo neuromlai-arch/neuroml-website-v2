@@ -758,6 +758,11 @@ class Command(BaseCommand):
             popup.form_heading = "Get in touch"
             popup.submit_label = "Send"
             popup.success_message = f"{PLACEHOLDER} Thanks — we'll be in touch shortly."
+            popup.delay_seconds = 60
+            popup.frequency_days = 1
+            popup.show_on_mobile = False
+            popup.hide_after_submit_days = 90
+            popup.exclude_paths = "/contact/\n/book-a-demo/"
             set_placeholder(popup, "panel_image", 600, 800, "Popup", slug="popup-panel")
             popup.save()
             popup.badges.set(recognitions[:3])

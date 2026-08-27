@@ -4,21 +4,21 @@
 {% block content %}
 <section class="relative overflow-hidden bg-white bg-grid-surface pb-24 pt-40 lg:pb-32 lg:pt-48">
   <div class="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2 lg:px-8">
-    <div class="reveal">
-      <p class="eyebrow">AI ENGINEERING STUDIO</p>
+    <div>
+      <p class="eyebrow hero-anim-eyebrow">AI ENGINEERING STUDIO</p>
       <h1 class="mt-4 font-serif text-hero tracking-tight">
         {% include "components/two_tone_heading.html" with heading=home.hero_heading %}
       </h1>
       {% if home.hero_subheading %}
-        <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-secondary">{{ home.hero_subheading }}</p>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-secondary hero-anim-subheading">{{ home.hero_subheading }}</p>
       {% endif %}
-      <div class="mt-10 flex flex-wrap items-center gap-4">
+      <div class="mt-10 flex flex-wrap items-center gap-4 hero-anim-cta">
         {% include "components/pill_cta.html" with label=home.hero_cta_label url=home.hero_cta_url %}
       </div>
     </div>
 
     <div
-      class="reveal"
+      class="hero-anim-stack"
       x-data="heroStack({{ hero_capabilities|length }})"
       @mouseenter="pause()" @mouseleave="resume()"
       @focusin="pause()" @focusout="resume()"
@@ -31,7 +31,10 @@
               :class="cardClass({{ forloop.counter0 }})"
               aria-hidden="{{ forloop.counter0|yesno:'false,true' }}"
             >
-              <p class="eyebrow">{{ forloop.counter|stringformat:"02d" }} / {{ hero_capabilities|length|stringformat:"02d" }}</p>
+              <p
+                class="eyebrow transition-all duration-[250ms] ease-out"
+                :class="active === {{ forloop.counter0 }} ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'"
+              >{{ forloop.counter|stringformat:"02d" }} / {{ hero_capabilities|length|stringformat:"02d" }}</p>
               <p class="mt-4 font-serif text-2xl text-ink">{{ capability }}</p>
             </div>
           {% endfor %}
@@ -45,22 +48,35 @@
             role="tab"
             @click="goTo({{ forloop.counter0 }})"
             :aria-selected="active === {{ forloop.counter0 }} ? 'true' : 'false'"
-            class="rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200"
-            :class="active === {{ forloop.counter0 }} ? 'border-ink bg-ink text-white' : 'border-hairline text-ink-secondary hover:border-ink'"
+            class="group relative overflow-hidden rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200"
+            :class="active === {{ forloop.counter0 }} ? 'border-ink bg-ink text-white' : 'border-hairline text-ink-secondary hover:border-ink hover:text-white'"
           >
-            {{ capability }}
+            <span class="pointer-events-none absolute inset-0 origin-left scale-x-0 bg-ink transition-transform duration-200 ease-out group-hover:scale-x-100" aria-hidden="true"></span>
+            <span class="relative z-10">{{ capability }}</span>
+            <span
+              class="pointer-events-none absolute inset-x-3 bottom-1 z-10 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-[250ms] ease-out"
+              :class="active === {{ forloop.counter0 }} ? 'scale-x-100' : 'scale-x-0'"
+              aria-hidden="true"
+            ></span>
           </button>
         {% endfor %}
       </div>
     </div>
+  </div>
+
+  <div class="scroll-indicator pointer-events-none absolute inset-x-0 bottom-6 flex justify-center lg:bottom-10" aria-hidden="true">
+    <svg class="animate-chevron-bounce text-ink-secondary" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4 8l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
 </section>
 
 {% cache 300 home_db_sections %}
 {# -------------------------------------------------------------- Trust band #}
 {% if recognitions %}
-  <section class="reveal bg-band py-14 text-white">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+  <section class="reveal relative overflow-hidden bg-band py-14 text-white">
+    <div class="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 animate-glow-pulse rounded-full bg-[radial-gradient(circle,rgba(168,30,30,1)_0%,rgba(168,30,30,0)_70%)]" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-7xl px-6 lg:px-8">
       <p class="eyebrow text-white/50">Recognised by</p>
       <div class="mt-8 flex flex-wrap items-center gap-x-12 gap-y-6">
         {% for r in recognitions %}
@@ -119,7 +135,7 @@
             <ul class="mt-6 space-y-3 border-t border-hairline pt-6">
               {% for service in cluster.services.all %}
                 <li>
-                  <a href="{{ service.get_absolute_url }}" class="flex items-center gap-2 text-sm text-ink-body hover:text-accent hover:underline hover:underline-offset-4">
+                  <a href="{{ service.get_absolute_url }}" class="link-underline flex w-fit items-center gap-2 text-sm text-ink-body hover:text-accent">
                     {% if service.icon %}
                       {% responsive_img service.icon alt="" css_class="h-4 w-4 shrink-0 object-contain" %}
                     {% endif %}
@@ -189,7 +205,7 @@
         {% include "components/section_heading.html" with eyebrow="Portfolio" heading="Recent work" %}
         <a
           href="{% url 'case_study_list' %}"
-          class="reveal shrink-0 text-sm font-semibold text-ink hover:text-accent hover:underline hover:underline-offset-4"
+          class="reveal link-underline w-fit shrink-0 text-sm font-semibold text-ink hover:text-accent"
         >
           View all {{ case_study_total_count }} projects &rarr;
         </a>
@@ -208,10 +224,10 @@
           {% for case_study in recent_work_case_studies %}
             <a
               href="{{ case_study.get_absolute_url }}"
-              class="reveal card card-hover w-56 shrink-0 snap-start overflow-hidden sm:w-64"
+              class="reveal card card-hover group w-56 shrink-0 snap-start overflow-hidden sm:w-64"
             >
               {% if case_study.hero_image %}
-                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover" sizes="256px" %}
+                {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="aspect-video w-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]" sizes="256px" %}
               {% endif %}
               <div class="p-4">
                 <p class="eyebrow">{{ case_study.display_client }}</p>
@@ -280,7 +296,7 @@
         >
           {% for case_study in featured_case_studies %}
             <div class="reveal w-full shrink-0 snap-start">
-              <div class="grid overflow-hidden rounded-[20px] border border-hairline bg-white lg:grid-cols-[45%_55%]">
+              <div class="card-hover group grid overflow-hidden rounded-[20px] border border-hairline bg-white lg:grid-cols-[45%_55%]">
                 <div class="order-2 flex flex-col justify-center p-8 lg:order-1 lg:p-12">
                   <p class="font-serif text-3xl text-ink lg:text-4xl">{{ case_study.display_client }}</p>
                   {% if case_study.excerpt %}
@@ -311,9 +327,9 @@
                 <div class="order-1 lg:order-2">
                   {% if case_study.hero_image %}
                     {% if forloop.first %}
-                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" loading="eager" %}
+                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03] sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" loading="eager" %}
                     {% else %}
-                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" %}
+                      {% responsive_img case_study.hero_image alt=case_study.hero_alt css_class="h-72 w-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03] sm:h-96 lg:h-full lg:min-h-[420px]" sizes="(min-width: 1024px) 55vw, 100vw" %}
                     {% endif %}
                   {% endif %}
                 </div>
@@ -355,11 +371,11 @@
 {% endif %}
 
 {# ------------------------------------------------------------- Insights #}
-<section class="border-t border-hairline bg-[#FAFAFA] py-20 lg:py-24">
-  <div class="mx-auto max-w-7xl px-6 lg:px-8">
-    {% include "components/section_heading.html" with eyebrow="Insights" heading=home.insights_heading %}
+{% if insights %}
+  <section class="border-t border-hairline bg-[#FAFAFA] py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      {% include "components/section_heading.html" with eyebrow="Insights" heading=home.insights_heading %}
 
-    {% if insights %}
       <div class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {% for item in insights %}
           <a href="{{ item.get_absolute_url }}" class="reveal card card-hover flex flex-col overflow-hidden">
@@ -374,11 +390,9 @@
           </a>
         {% endfor %}
       </div>
-    {% else %}
-      <p class="mt-14 text-sm text-ink-muted">No articles published yet.</p>
-    {% endif %}
-  </div>
-</section>
+    </div>
+  </section>
+{% endif %}
 
 {# --------------------------------------------------------- Testimonials #}
 {% if home.show_testimonials and testimonials %}

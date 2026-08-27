@@ -3,7 +3,7 @@ Usage: {% include "components/section_heading.html" with eyebrow="Work" heading=
 Optional: intro="..." for a lede paragraph, wide=True for max-w-none instead
 of the default max-w-2xl.
 {% endcomment %}
-<div class="reveal {% if not wide %}max-w-2xl{% endif %}">
+<div class="reveal-sm {% if not wide %}max-w-2xl{% endif %}">
   <span class="section-rule"></span>
   <p class="eyebrow">{{ eyebrow }}</p>
   <h2 class="mt-4 font-serif text-4xl text-ink lg:text-5xl">{{ heading }}</h2>

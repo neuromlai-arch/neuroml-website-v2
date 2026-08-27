@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -25,6 +26,7 @@ INSTALLED_APPS = [
     "easy_thumbnails",
     "django_q",
     "csp",
+    "axes",
     # local apps
     "core",
     "taxonomy",
@@ -48,7 +50,31 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.RedirectMiddleware",
+    # Must be the last middleware — axes needs to see the response every
+    # other middleware (including auth) has already produced.
+    "axes.middleware.AxesMiddleware",
 ]
+
+# django-axes: brute-force protection on the login form (admin at /manage/,
+# same login view everything else's LOGIN_URL points at). AxesStandaloneBackend
+# must come first so a lockout is enforced before ModelBackend ever checks
+# the password.
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Lock out after 5 failed attempts for 30 minutes, keyed on the
+# username+IP combination (axes' default is IP alone, which would lock out
+# an entire shared office/VPN exit IP over one person's typos; username
+# alone would let a distributed attacker still lock a real editor out).
+AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_RESET_COOLOFF_ON_FAILURE_DURING_LOCKOUT = False
+# A successful login clears that user's prior failed attempts rather than
+# letting them accumulate toward a future lockout.
+AXES_RESET_ON_SUCCESS = True
 
 ROOT_URLCONF = "config.urls"
 
@@ -167,5 +193,31 @@ CONTENT_SECURITY_POLICY = {
         "frame-ancestors": ["'none'"],
         "base-uri": ["'self'"],
         "form-action": ["'self'"],
+    },
+}
+
+# Every login attempt django-axes evaluates (success, failure, and lockout)
+# logs under the "axes" logger hierarchy. Root has no handler configured by
+# Django's defaults once LOGGING is set at all, so without this, failed
+# admin login attempts would be tracked (and still enforced) but invisible —
+# defeating "log attempts" as a security control. Console output is picked
+# up by whatever's collecting stdout/stderr in prod (Docker/CloudWatch).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "axes": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
 }

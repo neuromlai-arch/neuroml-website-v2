@@ -1,5 +1,5 @@
 User-agent: *
-Disallow: /admin/
+Disallow: /manage/
 Disallow: /careers/applications/
 Disallow: /forms/
 Disallow: /preview/

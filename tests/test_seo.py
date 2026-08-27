@@ -62,7 +62,7 @@ class RobotsTxtTests(TestCase):
 
     def test_robots_disallows_private_paths(self):
         body = self.client.get("/robots.txt").content.decode()
-        for path in ("/admin/", "/preview/", "/forms/", "/careers/applications/"):
+        for path in ("/manage/", "/preview/", "/forms/", "/careers/applications/"):
             self.assertIn(f"Disallow: {path}", body)
 
 

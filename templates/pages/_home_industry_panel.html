@@ -1,7 +1,7 @@
 {% if use_cases %}
   <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
     {% for use_case in use_cases %}
-      <a href="{{ use_case.cta_url|default:use_case.get_absolute_url }}" class="card card-hover flex flex-col p-6">
+      <a href="{{ use_case.cta_url|default:use_case.get_absolute_url }}" class="reveal card card-hover flex flex-col p-6">
         <p class="text-base font-semibold text-ink">{{ use_case.title }}</p>
         <p class="mt-2 flex-1 text-sm leading-relaxed text-ink-secondary">{{ use_case.summary }}</p>
         <span class="mt-6 text-sm font-semibold text-ink">{{ use_case.cta_label }} &rarr;</span>

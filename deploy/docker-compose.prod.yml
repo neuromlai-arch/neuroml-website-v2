@@ -1,0 +1,87 @@
+# Production stack for a single EC2 instance. Nginx is deliberately NOT a
+# service here — it runs on the host for TLS termination (see nginx.conf and
+# DEPLOY.md), so `web` only needs to be reachable from the host, not from the
+# public internet directly.
+#
+# Run from the app repo root (/opt/neuroml/app), not from deploy/:
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d
+# deploy.sh always invokes it this way — see there for the exact commands.
+#
+# Two separate env sources, on purpose:
+#   --env-file deploy/.env   interpolates ${POSTGRES_*} below, compose-only,
+#                             never reaches the app containers.
+#   env_file: /opt/neuroml/.env.prod   the actual Django settings (see
+#                             .env.prod.example at the repo root) — an
+#                             absolute path because this file is always
+#                             invoked from the repo root regardless of
+#                             which directory holds the compose file.
+
+x-app: &app
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: neuroml-site:latest
+  env_file:
+    - /opt/neuroml/.env.prod
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  web:
+    <<: *app
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    # Bound to localhost only — nginx on the host proxies to this; the
+    # container is never directly reachable from outside the instance.
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Bind mount, not a named volume: nginx runs on the host, not in
+      # Docker, so it needs a real host path it can read /static/ from
+      # directly. deploy.sh's `collectstatic` step (run against this same
+      # mount) is what actually populates it on every deploy — the copy
+      # baked into the image at build time (see Dockerfile) only exists to
+      # make the build step self-contained, and is shadowed by this mount
+      # the moment the container starts.
+      - /opt/neuroml/staticfiles:/app/staticfiles
+
+  worker:
+    <<: *app
+    # No qcluster process running means every contact/demo/popup/
+    # handbook-gate/job-application notification and the newsletter
+    # confirmation email silently never sends — see DEPLOY.md's CRITICAL
+    # section. This is not optional infrastructure.
+    command: python manage.py qcluster
+    # Not exposed to the host at all — it doesn't serve HTTP.
+    ports: []
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Not published to the host or the internet — only web/worker (on the
+    # compose network) ever talk to it.
+
+volumes:
+  postgres_data:

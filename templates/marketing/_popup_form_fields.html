@@ -15,27 +15,27 @@
   {% endfor %}
 
   <div>
-    <label for="{{ form.name.id_for_label }}" class="sr-only">Name</label>
+    <label for="{{ form.name.id_for_label }}" class="form-label text-ink-secondary">First name*</label>
     {{ form.name }}
     {% include "components/_field_error.html" with field=form.name %}
   </div>
   <div>
-    <label for="{{ form.email.id_for_label }}" class="sr-only">Email</label>
+    <label for="{{ form.email.id_for_label }}" class="form-label text-ink-secondary">Email*</label>
     {{ form.email }}
     {% include "components/_field_error.html" with field=form.email %}
   </div>
   <div>
-    <label for="{{ form.phone.id_for_label }}" class="sr-only">Phone</label>
+    <label for="{{ form.phone.id_for_label }}" class="form-label text-ink-secondary">Phone</label>
     {{ form.phone }}
   </div>
   {% if form.service_interest.field.queryset.exists %}
     <div>
-      <label for="{{ form.service_interest.id_for_label }}" class="sr-only">Service</label>
+      <label for="{{ form.service_interest.id_for_label }}" class="form-label text-ink-secondary">Service</label>
       {{ form.service_interest }}
     </div>
   {% endif %}
   <div>
-    <label for="{{ form.message.id_for_label }}" class="sr-only">Message</label>
+    <label for="{{ form.message.id_for_label }}" class="form-label text-ink-secondary">Message</label>
     {{ form.message }}
   </div>
   {{ form.utm_source }}{{ form.utm_medium }}{{ form.utm_campaign }}

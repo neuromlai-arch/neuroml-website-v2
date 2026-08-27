@@ -24,6 +24,95 @@
     opacity: 1;
     transform: none;
   }
+  /* Same as .reveal, but for headings — smaller elements move less. */
+  .reveal-sm {
+    @apply translate-y-2 opacity-0 transition duration-300 ease-out;
+  }
+  .reveal-sm.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hero entrance cascade — pure CSS, plays on paint regardless of JS. Each
+   class both hides the element for its animation-delay (animation-fill-mode:
+   both applies the 0% keyframe during the delay) and plays the entrance once
+   the delay elapses. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fade-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.hero-anim-eyebrow { animation: fade-in 300ms ease-out both; }
+.hero-anim-line1 { animation: fade-slide-up 400ms ease-out 200ms both; }
+.hero-anim-line2 { animation: fade-slide-up 400ms ease-out 400ms both; }
+.hero-anim-subheading { animation: fade-in 400ms ease-out 600ms both; }
+.hero-anim-cta { animation: fade-scale-in 400ms ease-out 800ms both; }
+.hero-anim-stack { animation: fade-slide-in-right 500ms ease-out 1000ms both; }
+
+/* Trust band accent glow — barely perceptible warmth, not a call-out. */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.20; }
+  50% { opacity: 0.28; }
+}
+.animate-glow-pulse { animation: glow-pulse 8s ease-in-out infinite; }
+
+/* Scroll indicator at the foot of the hero. */
+@keyframes chevron-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+.animate-chevron-bounce { animation: chevron-bounce 2s ease-in-out infinite; }
+.scroll-indicator {
+  transition: opacity 500ms ease-out;
+}
+.scroll-indicator.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Floating action buttons — not primary, shouldn't compete with the hero. */
+.float-fade-in {
+  animation: fade-in 400ms ease-out 1s both;
+}
+
+/* Body-copy link underline that grows from left to right, rather than
+   Tailwind's instant `underline` utility. Uses a background-image instead of
+   text-decoration so the grow animates via background-size. */
+.link-underline {
+  background-image: linear-gradient(theme("colors.accent"), theme("colors.accent"));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 0% 1px;
+  transition: background-size 200ms ease-out, color 200ms ease-out;
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Everything above (and every Tailwind transition/animation utility) is
+   neutralised here, sitewide, with no exceptions — this block is the single
+   source of truth for prefers-reduced-motion rather than gating each
+   animation individually. Written outside any @layer so it wins the cascade
+   over layered Tailwind utilities regardless of source order. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer components {

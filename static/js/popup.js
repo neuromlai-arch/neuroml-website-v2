@@ -1,6 +1,25 @@
-/* Lead popup trigger logic: delay / scroll / exit-intent / delay-or-exit,
-   a frequency-cap cookie on dismissal, and a longer-lived cookie once the
-   form is submitted (both set from server-driven day counts).
+/* Lead popup trigger logic: delay / scroll / exit-intent / delay-or-exit for
+   the *first* show, then a session-scoped re-show schedule after that:
+
+     dismissal 1 -> wait 3 minutes -> show again
+     dismissal 2 -> wait 3 minutes -> show again
+     dismissal 3+ -> wait 5 minutes -> show again (repeats for the rest of
+                     the session)
+
+   Dismissal count and the "when did we last dismiss" timestamp live in
+   sessionStorage, so they reset when the tab closes but survive ordinary
+   page navigation within the same tab (each page load re-derives the
+   remaining wait from the stored timestamp rather than restarting a timer
+   at delaySeconds/3min/5min from scratch).
+
+   Two cookies carry state *across* sessions/tabs, since sessionStorage
+   can't:
+     - popup_dismissed: set on every dismissal, expires after frequencyDays.
+       A fresh session (no session-active marker yet) checks this cookie
+       before arming anything — if it's still set, the visitor dismissed in
+       a previous session and hasn't waited out frequencyDays yet.
+     - popup_submitted: set on successful submission, expires after
+       hideAfterSubmitDays. Its presence blocks the popup unconditionally.
 
    Registered via Alpine.data() on the alpine:init event rather than as a
    bare global function: Alpine's CDN build calls Alpine.start() as soon as
@@ -14,17 +33,51 @@
    before it scans the DOM, so it's always ready in time regardless of
    script order. */
 document.addEventListener("alpine:init", () => {
+  const SESSION_ACTIVE_KEY = "popup_session_active";
+  const DISMISS_COUNT_KEY = "popup_dismiss_count";
+  const LAST_DISMISSED_AT_KEY = "popup_last_dismissed_at";
+  const SHORT_INTERVAL_SECONDS = 3 * 60;
+  const LONG_INTERVAL_SECONDS = 5 * 60;
+  const SHORT_INTERVAL_DISMISSAL_LIMIT = 2;
+
   Alpine.data("leadPopup", (config) => ({
     open: false,
     config,
     init() {
       if (!this.config.enabled) return;
+      // Skip the JS timer entirely on mobile when disabled there — this is
+      // not just a CSS hide, the popup never arms and never shows.
       if (!this.config.showOnMobile && window.innerWidth < 768) return;
       if (this.config.excludePaths.includes(window.location.pathname)) return;
-      if (this.getCookie("popup_dismissed") || this.getCookie("popup_submitted")) return;
+      if (this.getCookie("popup_submitted")) return;
 
+      const sessionActive = sessionStorage.getItem(SESSION_ACTIVE_KEY) === "1";
+      if (!sessionActive) {
+        // First init in this tab session: the between-session frequency
+        // gate applies. If the visitor dismissed in an earlier session and
+        // frequencyDays hasn't elapsed, the cookie is still set — bail out
+        // entirely rather than arming anything.
+        if (this.getCookie("popup_dismissed")) return;
+        sessionStorage.setItem(SESSION_ACTIVE_KEY, "1");
+      }
+
+      const dismissCount = parseInt(sessionStorage.getItem(DISMISS_COUNT_KEY) || "0", 10);
+      if (dismissCount === 0) {
+        this.armInitialTrigger();
+      } else {
+        const lastDismissedAt = parseInt(sessionStorage.getItem(LAST_DISMISSED_AT_KEY) || "0", 10);
+        const intervalMs = this.intervalSecondsForCount(dismissCount) * 1000;
+        this.scheduleShowAfter(lastDismissedAt + intervalMs - Date.now());
+      }
+
+      window.addEventListener("popup:submitted", () => {
+        this.setCookie("popup_submitted", "1", this.config.hideAfterSubmitDays);
+        setTimeout(() => this.close(false), 1500);
+      });
+    },
+    armInitialTrigger() {
       if (this.config.trigger === "delay" || this.config.trigger === "delay_or_exit") {
-        setTimeout(() => this.show(), this.config.delaySeconds * 1000);
+        this.scheduleShowAfter(this.config.delaySeconds * 1000);
       }
       if (this.config.trigger === "scroll") {
         const onScroll = () => {
@@ -46,18 +99,25 @@ document.addEventListener("alpine:init", () => {
         };
         document.addEventListener("mouseout", onExit);
       }
-
-      window.addEventListener("popup:submitted", () => {
-        this.setCookie("popup_submitted", "1", this.config.hideAfterSubmitDays);
-        setTimeout(() => this.close(false), 1500);
-      });
+    },
+    intervalSecondsForCount(count) {
+      return count <= SHORT_INTERVAL_DISMISSAL_LIMIT ? SHORT_INTERVAL_SECONDS : LONG_INTERVAL_SECONDS;
+    },
+    scheduleShowAfter(ms) {
+      setTimeout(() => this.show(), Math.max(0, ms));
     },
     show() {
       if (!this.open) this.open = true;
     },
     close(remember = true) {
       this.open = false;
-      if (remember) this.setCookie("popup_dismissed", "1", this.config.frequencyDays);
+      if (!remember) return;
+
+      const count = parseInt(sessionStorage.getItem(DISMISS_COUNT_KEY) || "0", 10) + 1;
+      sessionStorage.setItem(DISMISS_COUNT_KEY, String(count));
+      sessionStorage.setItem(LAST_DISMISSED_AT_KEY, String(Date.now()));
+      this.setCookie("popup_dismissed", "1", this.config.frequencyDays);
+      this.scheduleShowAfter(this.intervalSecondsForCount(count) * 1000);
     },
     getCookie(name) {
       return document.cookie.split("; ").find((row) => row.startsWith(name + "="));
