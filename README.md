@@ -177,3 +177,4 @@ the deploy script, CI's `deploy` job, DNS, and the cutover checklist — see
   `[TODO: ...]` strings — obvious and greppable on purpose, per CLAUDE.md.
 - Video (`Testimonial.video_url`, `Webinar.recording_url`) links out rather
   than embedding inline — no iframe/CSP `frame-src` wiring yet.
+# neuroml-site-v2
