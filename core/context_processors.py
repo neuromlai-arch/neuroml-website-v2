@@ -77,7 +77,7 @@ def site_settings(request):
     org = {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": settings_obj.site_name or "[TODO: company name]",
+        "name": settings_obj.site_name or "NeuroML.AI",
         "url": request.build_absolute_uri("/"),
     }
     if settings_obj.logo:

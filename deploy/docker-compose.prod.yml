@@ -60,6 +60,17 @@ services:
     command: python manage.py qcluster
     # Not exposed to the host at all — it doesn't serve HTTP.
     ports: []
+    # Override the image's HEALTHCHECK (Dockerfile's is `curl .../healthz/`,
+    # gunicorn-only) — this container never listens on 8000, so that probe
+    # would always fail here regardless of whether qcluster is actually
+    # alive. check_worker_health is the same heartbeat check /healthz/worker/
+    # uses — see DEPLOY.md's "verify it's actually running" section.
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check_worker_health"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
 
   db:
     image: postgres:16

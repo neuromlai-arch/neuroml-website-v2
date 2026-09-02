@@ -76,7 +76,7 @@
   "employmentType": "{% if object.employment_type == 'full_time' %}FULL_TIME{% elif object.employment_type == 'part_time' %}PART_TIME{% elif object.employment_type == 'contract' %}CONTRACTOR{% elif object.employment_type == 'internship' %}INTERN{% endif %}",
   "hiringOrganization": {
     "@type": "Organization",
-    "name": "{{ site_settings.site_name|default:"[TODO: company name]"|escapejs }}"
+    "name": "{{ site_settings.site_name|default:"NeuroML.AI"|escapejs }}"
   },
   {% if object.location %}"jobLocation": {
     "@type": "Place",
