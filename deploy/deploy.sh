@@ -70,8 +70,13 @@ docker image prune -f >/dev/null
 
 log "Health check"
 sleep 2
-HEALTH="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/healthz/)"
-WORKER_HEALTH="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/healthz/worker/)"
+# SECURE_PROXY_SSL_HEADER (config/settings/prod.py) makes Django trust
+# X-Forwarded-Proto for request.is_secure() — nginx always sets it (see
+# deploy/nginx.conf), but curling gunicorn directly here doesn't, so
+# without it SECURE_SSL_REDIRECT turns every check into a 301 instead of
+# the real status.
+HEALTH="$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' http://127.0.0.1:8000/healthz/)"
+WORKER_HEALTH="$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Forwarded-Proto: https' http://127.0.0.1:8000/healthz/worker/)"
 echo "    /healthz/         -> $HEALTH"
 echo "    /healthz/worker/  -> $WORKER_HEALTH (503 here just after deploy is expected — the"
 echo "                          heartbeat schedule needs a few minutes to check in; re-check"
