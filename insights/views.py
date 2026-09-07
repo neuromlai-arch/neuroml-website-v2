@@ -20,6 +20,7 @@ from core.notifications import notify_staff_of_submission
 from core.utm import utm_initial
 from insights.models import BlogPost, CaseStudy, Handbook, Webinar
 from pages.models import SiteSettings
+from solutions.models import UseCase
 from taxonomy.models import Industry, Tag
 
 PAGE_SIZE = 12
@@ -152,9 +153,19 @@ def case_study_detail(request, slug):
         ),
         slug=slug,
     )
+    related_use_cases = (
+        UseCase.objects.live()
+        .filter(industry_id=case_study.industry_id)
+        .order_by("order")[:3]
+        if case_study.industry_id else UseCase.objects.none()
+    )
     context = {
         "object": case_study,
         "seo": case_study,
+        # Reuses the services prefetch above rather than a second query —
+        # only a tagged service that's actually live is a valid link target.
+        "related_services": [s for s in case_study.services.all() if s.is_live],
+        "related_use_cases": related_use_cases,
         "breadcrumbs": [
             {"label": "Home", "url": reverse("home")},
             {"label": "Case studies", "url": reverse("case_study_list")},

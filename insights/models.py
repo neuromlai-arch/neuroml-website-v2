@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from core.fields import RichTextField
 from core.images import downscale_in_place, warm_renditions
@@ -8,6 +9,17 @@ from core.models import Publishable, SEOFields, TimeStampedModel
 from people.models import TeamMember
 from solutions.models import Service
 from taxonomy.models import Industry, Tag
+
+PLACEHOLDER_PREFIXES = ("[TODO]", "[Placeholder]")
+
+
+def is_placeholder_text(value):
+    """True for seed-fixture stand-in copy (`[TODO] ...`, `[Placeholder]
+    ...`) that must never reach a published page. Compares against
+    stripped, tag-free text so it works on both plain and rich-text
+    fields."""
+    text = strip_tags(value or "").strip()
+    return any(text.startswith(prefix) for prefix in PLACEHOLDER_PREFIXES)
 
 
 class InsightBase(TimeStampedModel, SEOFields, Publishable):
@@ -90,6 +102,28 @@ class CaseStudy(InsightBase):
         if self.client_anonymous or not self.client_name:
             return "Confidential client"
         return self.client_name
+
+    @property
+    def has_real_challenge(self):
+        return bool(self.challenge) and not is_placeholder_text(self.challenge)
+
+    @property
+    def has_real_approach(self):
+        return bool(self.approach) and not is_placeholder_text(self.approach)
+
+    @property
+    def has_real_outcome(self):
+        return bool(self.outcome) and not is_placeholder_text(self.outcome)
+
+    @property
+    def real_metrics(self):
+        """Metrics with real content — skips [TODO]/[Placeholder] rows.
+        Reads through .all() so a prefetch_related("metrics") in the view
+        is reused rather than triggering a second query."""
+        return [
+            metric for metric in self.metrics.all()
+            if not is_placeholder_text(metric.value) and not is_placeholder_text(metric.label)
+        ]
 
 
 class Metric(models.Model):

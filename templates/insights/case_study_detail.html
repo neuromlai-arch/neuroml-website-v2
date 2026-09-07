@@ -21,32 +21,34 @@
     </div>
   {% endif %}
 
-  {% if object.metrics.all %}
-    <div class="reveal card mt-10 grid grid-cols-2 gap-6 p-8 sm:grid-cols-4">
-      {% for metric in object.metrics.all %}
-        <div>
-          <p class="font-serif text-4xl text-accent">{{ metric.value }}</p>
-          <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+  {% with real_metrics=object.real_metrics %}
+    {% if real_metrics %}
+      <div class="reveal card mt-10 grid grid-cols-2 gap-6 p-8 sm:grid-cols-4">
+        {% for metric in real_metrics %}
+          <div>
+            <p class="font-serif text-4xl text-accent">{{ metric.value }}</p>
+            <p class="mt-1 text-xs text-ink-secondary">{{ metric.label }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-  {% if object.challenge|default:""|striptags|slice:":6" != "[TODO]" or object.approach|default:""|striptags|slice:":6" != "[TODO]" or object.outcome|default:""|striptags|slice:":6" != "[TODO]" %}
+  {% if object.has_real_challenge or object.has_real_approach or object.has_real_outcome %}
   <div class="reveal mt-14 grid gap-10 sm:grid-cols-3">
-    {% if object.challenge and object.challenge|striptags|slice:":6" != "[TODO]" %}
+    {% if object.has_real_challenge %}
       <section>
         <h2 class="font-serif text-2xl text-ink">The challenge</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.challenge|safe }}</div>
       </section>
     {% endif %}
-    {% if object.approach and object.approach|striptags|slice:":6" != "[TODO]" %}
+    {% if object.has_real_approach %}
       <section>
         <h2 class="font-serif text-2xl text-ink">Our approach</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.approach|safe }}</div>
       </section>
     {% endif %}
-    {% if object.outcome and object.outcome|striptags|slice:":6" != "[TODO]" %}
+    {% if object.has_real_outcome %}
       <section>
         <h2 class="font-serif text-2xl text-ink">The outcome</h2>
         <div class="prose prose-neutral mt-4 max-w-none text-sm text-ink-secondary">{{ object.outcome|safe }}</div>
@@ -66,6 +68,43 @@
     </div>
   {% endif %}
 </article>
+
+{% if object.industry or related_services or related_use_cases %}
+  <section class="border-t border-hairline bg-[#FAFAFA] py-20 lg:py-24">
+    <div class="mx-auto max-w-4xl px-6 lg:px-8">
+      <p class="eyebrow">Related</p>
+      <h2 class="mt-4 font-serif text-2xl text-ink">Explore more</h2>
+      <div class="mt-8 grid gap-8 sm:grid-cols-2">
+        {% if object.industry %}
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Industry</p>
+            <a href="{{ object.industry.get_absolute_url }}" class="link-underline mt-2 block w-fit text-sm font-semibold text-ink hover:text-accent">{{ object.industry.name }} &rarr;</a>
+          </div>
+        {% endif %}
+        {% if related_services %}
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Services</p>
+            <ul class="mt-2 space-y-2">
+              {% for service in related_services %}
+                <li><a href="{{ service.get_absolute_url }}" class="link-underline w-fit text-sm font-semibold text-ink hover:text-accent">{{ service.title }} &rarr;</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+        {% if related_use_cases %}
+          <div class="sm:col-span-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Related use cases</p>
+            <ul class="mt-2 grid gap-2 sm:grid-cols-3">
+              {% for use_case in related_use_cases %}
+                <li><a href="{{ use_case.get_absolute_url }}" class="link-underline w-fit text-sm text-ink-body hover:text-accent">{{ use_case.title }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endif %}
 
 {% if object.testimonials.all %}
   <section class="border-t border-hairline bg-white py-24 lg:py-32">

@@ -14,6 +14,8 @@ og_image/canonical_url/noindex), with sensible fallbacks. Include inside <head>.
   <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ seo.og_image.url }}">
 {% elif seo.hero_image %}
   <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ seo.hero_image.url }}">
+{% elif site_settings.default_og_image %}
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.default_og_image.url }}">
 {% endif %}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ seo.seo_title }}">

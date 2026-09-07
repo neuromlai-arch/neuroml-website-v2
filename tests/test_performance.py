@@ -32,6 +32,11 @@ Homepage moved to 15 in the frontend polish pass: the stats band added
 three COUNT queries (published case studies, live iGaming platforms,
 technologies) — real, deliberate, and cheap (COUNT, not a row fetch), not
 a regression.
+
+Case study detail moved to 11 in the case-study audit pass: the new
+"Explore more" section's related-use-cases lookup is one extra query
+(filtered on industry_id, LIMIT 3) — related services and industry reuse
+the existing prefetch/select_related, so they're free.
 """
 
 from django.core.management import call_command
@@ -87,7 +92,7 @@ class CaseStudyDetailQueryBudgetTests(TestCase):
     def test_case_study_detail_query_count(self):
         url = reverse("case_study_detail", kwargs={"slug": self.slug})
         self.client.get(url)
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             self.client.get(url)
 
 
